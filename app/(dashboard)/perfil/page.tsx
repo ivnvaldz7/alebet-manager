@@ -1,0 +1,231 @@
+'use client'
+
+import { useAuth } from '@/hooks/useAuth'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { User, Mail, Briefcase, Camera } from 'lucide-react'
+import { useState } from 'react'
+import toast from 'react-hot-toast'
+
+export default function PerfilPage() {
+  const { user } = useAuth()
+  const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+
+  const [formData, setFormData] = useState({
+    nombre: user?.name || '',
+    email: user?.email || '',
+  })
+
+  const getRolLabel = (rol: string) => {
+    const labels: Record<string, string> = {
+      admin: 'Administrador',
+      vendedor: 'Vendedor',
+      armador: 'Armador',
+    }
+    return labels[rol] || rol
+  }
+
+  const getRolIcon = (rol: string) => {
+    if (rol === 'admin') return 'A'
+    if (rol === 'vendedor') return 'V'
+    if (rol === 'armador') return 'R'
+    return 'U'
+  }
+
+  const handleSave = async () => {
+    setIsSaving(true)
+    // TODO: Implementar API para actualizar perfil
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    toast.success('Perfil actualizado correctamente')
+    setIsEditing(false)
+    setIsSaving(false)
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-secondary-900">Mi Perfil</h1>
+        <p className="text-secondary-600 mt-1">
+          Información personal y configuración
+        </p>
+      </div>
+
+      {/* Avatar y rol */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-6">
+            {/* Avatar */}
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-4xl font-bold shadow-lg">
+                {getRolIcon(user?.role || 'vendedor')}
+              </div>
+              <button
+                className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-md border border-secondary-200 hover:bg-secondary-50 transition-colors"
+                title="Cambiar foto (próximamente)"
+              >
+                <Camera className="h-4 w-4 text-secondary-600" />
+              </button>
+            </div>
+
+            {/* Info */}
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-secondary-900">
+                {user?.name}
+              </h2>
+              <p className="text-secondary-600 mt-1">{user?.email}</p>
+              <div className="flex gap-2 mt-3">
+                <Badge variant="default">
+                  {getRolLabel(user?.role || 'vendedor')}
+                </Badge>
+                {user?.role === 'admin' && user?.contexto && (
+                  <Badge variant="secondary">
+                    Modo: {getRolLabel(user.contexto)}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Información personal */}
+      <Card className="mb-6">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Información Personal</CardTitle>
+          {!isEditing && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsEditing(true)}
+            >
+              Editar
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-secondary-700 mb-2">
+              <User className="h-4 w-4" />
+              Nombre completo
+            </label>
+            <Input
+              value={formData.nombre}
+              onChange={(e) =>
+                setFormData({ ...formData, nombre: e.target.value })
+              }
+              disabled={!isEditing}
+              placeholder="Juan Pérez"
+            />
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-secondary-700 mb-2">
+              <Mail className="h-4 w-4" />
+              Email
+            </label>
+            <Input
+              type="email"
+              value={formData.email}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
+              disabled={!isEditing}
+              placeholder="juan@alebet.com"
+            />
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-secondary-700 mb-2">
+              <Briefcase className="h-4 w-4" />
+              Rol
+            </label>
+            <Input
+              value={getRolLabel(user?.role || 'vendedor')}
+              disabled
+              className="bg-secondary-50"
+            />
+            <p className="text-xs text-secondary-500 mt-1">
+              Solo el administrador puede cambiar roles
+            </p>
+          </div>
+
+          {isEditing && (
+            <div className="flex gap-3 pt-4 border-t border-secondary-200">
+              <Button
+                onClick={handleSave}
+                disabled={isSaving}
+                isLoading={isSaving}
+                className="flex-1"
+              >
+                Guardar Cambios
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setIsEditing(false)
+                  setFormData({
+                    nombre: user?.name || '',
+                    email: user?.email || '',
+                  })
+                }}
+                disabled={isSaving}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Cambiar contraseña */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Seguridad</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between p-4 bg-secondary-50 rounded-lg">
+            <div>
+              <p className="font-medium text-secondary-900">
+                Cambiar contraseña
+              </p>
+              <p className="text-sm text-secondary-600 mt-1">
+                Actualiza tu contraseña periódicamente
+              </p>
+            </div>
+            <Button variant="secondary" size="sm">
+              Cambiar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Información del sistema */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Información del Sistema</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <div className="flex justify-between">
+            <span className="text-secondary-600">Versión:</span>
+            <span className="font-medium text-secondary-900">1.0.0</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-secondary-600">Último acceso:</span>
+            <span className="font-medium text-secondary-900">Hoy a las 14:30</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-secondary-600">ID de usuario:</span>
+            <span className="font-mono text-xs text-secondary-700">
+              {user?.id?.slice(0, 8) || 'N/A'}...
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
