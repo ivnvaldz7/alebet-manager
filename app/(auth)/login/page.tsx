@@ -1,66 +1,63 @@
-'use client'
+"use client";
 
-import { useState, FormEvent } from 'react'
-import { signIn } from 'next-auth/react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import toast from 'react-hot-toast'
-import Image from 'next/image'
+import { useState, FormEvent } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import toast from "react-hot-toast";
+import Image from "next/image";
 
 export default function LoginPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || '/inicio'
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/inicio";
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
     try {
-      const result = await signIn('credentials', {
+      const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
-      })
+      });
 
       if (result?.error) {
-        toast.error(result.error)
+        toast.error(result.error);
       } else {
-        toast.success('¡Bienvenido!')
-        router.push(callbackUrl)
-        router.refresh()
+        toast.success("¡Bienvenido!");
+        router.push(callbackUrl);
+        router.refresh();
       }
     } catch (error) {
-      toast.error('Error al iniciar sesión')
+      toast.error("Error al iniciar sesión");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center pb-8">
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center mb-8">
             <Image
-              src="/logo.png"
-              alt="Ale-Bet Logo"
-              width={100}
-              height={100}
+              src="/logistica-brand.png"
+              alt="Ale-Bet"
+              width={220}
+              height={80}
               className="object-contain"
             />
           </div>
-          <CardTitle className="text-3xl">Ale-Bet Manager</CardTitle>
-          <p className="text-secondary-500 mt-2">
-            Ingresá para continuar
-          </p>
+          <p className="text-secondary-500 mt-2">Laboratorios alebet</p>
         </CardHeader>
 
         <CardContent>
@@ -78,7 +75,7 @@ export default function LoginPage() {
 
             <div className="relative">
               <Input
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 label="Contraseña"
                 placeholder="••••••••"
                 value={password}
@@ -134,17 +131,8 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 p-4 bg-primary-50 rounded-lg border border-primary-200">
-            <p className="text-xs text-secondary-600 text-center">
-              <strong>Credenciales iniciales:</strong>
-              <br />
-              Email: ivan@alebet.com
-              <br />
-              Password: admin123
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -337,7 +337,7 @@ export default function NuevoPedidoPage() {
                     </div>
 
                     {/* Controles de cantidad */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-4">
                       {/* Cajas */}
                       <div>
                         <label className="block text-sm font-medium text-secondary-700 mb-2">
@@ -353,7 +353,7 @@ export default function NuevoPedidoPage() {
                                 item.cajas - 1
                               )
                             }
-                            className="p-2 border border-secondary-300 rounded-lg hover:bg-secondary-50"
+                            className="p-2 sm:p-3 border border-secondary-300 rounded-lg hover:bg-secondary-50 flex-shrink-0"
                           >
                             <Minus className="h-4 w-4" />
                           </button>
@@ -368,7 +368,7 @@ export default function NuevoPedidoPage() {
                                 parseInt(e.target.value) || 0
                               )
                             }
-                            className="flex-1 text-center px-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="flex-1 text-center px-2 sm:px-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-w-0"
                           />
                           <button
                             type="button"
@@ -379,7 +379,7 @@ export default function NuevoPedidoPage() {
                                 item.cajas + 1
                               )
                             }
-                            className="p-2 border border-secondary-300 rounded-lg hover:bg-secondary-50"
+                            className="p-2 sm:p-3 border border-secondary-300 rounded-lg hover:bg-secondary-50 flex-shrink-0"
                           >
                             <Plus className="h-4 w-4" />
                           </button>
@@ -401,7 +401,7 @@ export default function NuevoPedidoPage() {
                                 item.sueltos - 1
                               )
                             }
-                            className="p-2 border border-secondary-300 rounded-lg hover:bg-secondary-50"
+                            className="p-2 sm:p-3 border border-secondary-300 rounded-lg hover:bg-secondary-50 flex-shrink-0"
                           >
                             <Minus className="h-4 w-4" />
                           </button>
@@ -417,7 +417,7 @@ export default function NuevoPedidoPage() {
                                 parseInt(e.target.value) || 0
                               )
                             }
-                            className="flex-1 text-center px-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="flex-1 text-center px-2 sm:px-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-w-0"
                           />
                           <button
                             type="button"
@@ -428,7 +428,7 @@ export default function NuevoPedidoPage() {
                                 item.sueltos + 1
                               )
                             }
-                            className="p-2 border border-secondary-300 rounded-lg hover:bg-secondary-50"
+                            className="p-2 sm:p-3 border border-secondary-300 rounded-lg hover:bg-secondary-50 flex-shrink-0"
                           >
                             <Plus className="h-4 w-4" />
                           </button>

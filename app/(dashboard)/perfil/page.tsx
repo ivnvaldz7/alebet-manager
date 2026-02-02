@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { User, Mail, Briefcase, Camera } from 'lucide-react'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
+import { signOut } from 'next-auth/react'
 
 export default function PerfilPage() {
   const { user } = useAuth()
@@ -36,12 +37,42 @@ export default function PerfilPage() {
   }
 
   const handleSave = async () => {
+    if (!user?.id) {
+      toast.error('Error: No se pudo identificar el usuario')
+      return
+    }
+
     setIsSaving(true)
-    // TODO: Implementar API para actualizar perfil
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    toast.success('Perfil actualizado correctamente')
-    setIsEditing(false)
-    setIsSaving(false)
+
+    try {
+      const response = await fetch(`/api/usuarios/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: formData.nombre,
+          email: formData.email,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success('Perfil actualizado correctamente')
+        setIsEditing(false)
+
+        // Forzar cierre de sesión y re-login
+        setTimeout(async () => {
+          await signOut({ redirect: false })
+          window.location.href = '/login'
+        }, 1500)
+      } else {
+        toast.error(data.error || 'Error actualizando perfil')
+        setIsSaving(false)
+      }
+    } catch (error) {
+      toast.error('Error al actualizar perfil')
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -63,12 +94,28 @@ export default function PerfilPage() {
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-4xl font-bold shadow-lg">
                 {getRolIcon(user?.role || 'vendedor')}
               </div>
-              <button
-                className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-md border border-secondary-200 hover:bg-secondary-50 transition-colors"
-                title="Cambiar foto (próximamente)"
-              >
-                <Camera className="h-4 w-4 text-secondary-600" />
-              </button>
+              <>
+                <input
+                  type="file"
+                  id="foto-perfil"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      toast.info('Función de foto próximamente')
+                    }
+                  }}
+                />
+                <label
+                  htmlFor="foto-perfil"
+                  className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-md border border-secondary-200 hover:bg-secondary-50 transition-colors cursor-pointer"
+                  title="Cambiar foto"
+                >
+                  <Camera className="h-4 w-4 text-secondary-600" />
+                </label>
+              </>
             </div>
 
             {/* Info */}

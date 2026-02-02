@@ -5,16 +5,29 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Package, AlertTriangle, Search } from 'lucide-react'
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 export default function StockPage() {
   const { productos, isLoading } = useProducts()
   const [busqueda, setBusqueda] = useState('')
+  const searchParams = useSearchParams()
+  const mostrarCritico = searchParams.get('critico') === 'true'
 
-  const productosFiltrados = busqueda
-    ? productos.filter((p) =>
-        p.nombreCompleto.toLowerCase().includes(busqueda.toLowerCase())
-      )
-    : productos
+  let productosFiltrados = productos
+
+  // Filtro de búsqueda
+  if (busqueda) {
+    productosFiltrados = productosFiltrados.filter((p) =>
+      p.nombreCompleto.toLowerCase().includes(busqueda.toLowerCase())
+    )
+  }
+
+  // Filtro de stock crítico
+  if (mostrarCritico) {
+    productosFiltrados = productosFiltrados.filter(
+      (p) => p.stockTotal.totalUnidades <= p.stockMinimo
+    )
+  }
 
   if (isLoading) {
     return (
@@ -31,6 +44,7 @@ export default function StockPage() {
         <h1 className="text-2xl font-bold text-secondary-900">Stock</h1>
         <p className="text-secondary-600 mt-1">
           {productos.length} producto{productos.length !== 1 ? 's' : ''} en inventario
+          {mostrarCritico && ' - Mostrando solo stock crítico'}
         </p>
       </div>
 

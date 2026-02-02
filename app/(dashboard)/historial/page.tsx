@@ -6,9 +6,16 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Search, Download, Filter } from 'lucide-react'
 import { useState } from 'react'
+import toast from 'react-hot-toast'
 
 export default function HistorialPage() {
   const [busqueda, setBusqueda] = useState('')
+  const [mostrarFiltros, setMostrarFiltros] = useState(false)
+  const [filtros, setFiltros] = useState({
+    tipo: 'todos',
+    fechaDesde: '',
+    fechaHasta: '',
+  })
 
   // Datos dummy - después conectar con API real
   const historialCompleto = [
@@ -41,14 +48,66 @@ export default function HistorialPage() {
     },
   ]
 
-  const historialFiltrado = busqueda
-    ? historialCompleto.filter(
-        (item) =>
-          item.accion.toLowerCase().includes(busqueda.toLowerCase()) ||
-          item.detalle.toLowerCase().includes(busqueda.toLowerCase()) ||
-          item.usuario.toLowerCase().includes(busqueda.toLowerCase())
-      )
-    : historialCompleto
+  let historialFiltrado = historialCompleto
+
+  // Filtro por búsqueda
+  if (busqueda) {
+    historialFiltrado = historialFiltrado.filter(
+      (item) =>
+        item.accion.toLowerCase().includes(busqueda.toLowerCase()) ||
+        item.detalle.toLowerCase().includes(busqueda.toLowerCase()) ||
+        item.usuario.toLowerCase().includes(busqueda.toLowerCase())
+    )
+  }
+
+  // Filtro por tipo
+  if (filtros.tipo !== 'todos') {
+    historialFiltrado = historialFiltrado.filter((item) => item.tipo === filtros.tipo)
+  }
+
+  // Filtro por fecha desde
+  if (filtros.fechaDesde) {
+    historialFiltrado = historialFiltrado.filter(
+      (item) => item.fecha >= filtros.fechaDesde
+    )
+  }
+
+  // Filtro por fecha hasta
+  if (filtros.fechaHasta) {
+    historialFiltrado = historialFiltrado.filter(
+      (item) => item.fecha <= filtros.fechaHasta
+    )
+  }
+
+  // Función de exportar a CSV
+  const exportarCSV = () => {
+    const csvContent = [
+      ['Fecha', 'Acción', 'Detalle', 'Usuario', 'Estado'].join(','),
+      ...historialFiltrado.map((item) =>
+        [
+          item.fecha,
+          `"${item.accion}"`,
+          `"${item.detalle}"`,
+          item.usuario,
+          item.status,
+        ].join(',')
+      ),
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+
+    link.setAttribute('href', url)
+    link.setAttribute('download', `historial_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+
+    toast.success('Historial exportado correctamente')
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -76,17 +135,98 @@ export default function HistorialPage() {
                 className="pl-10"
               />
             </div>
-            <Button variant="secondary" className="sm:w-auto">
+            <Button
+              variant="secondary"
+              className="sm:w-auto"
+              onClick={() => setMostrarFiltros(!mostrarFiltros)}
+            >
               <Filter className="h-4 w-4 mr-2" />
               Filtros
+              {(filtros.tipo !== 'todos' || filtros.fechaDesde || filtros.fechaHasta) && (
+                <span className="ml-2 px-2 py-0.5 bg-primary-100 text-primary-700 rounded-full text-xs">
+                  Activos
+                </span>
+              )}
             </Button>
-            <Button variant="secondary" className="sm:w-auto">
+            <Button
+              variant="secondary"
+              className="sm:w-auto"
+              onClick={exportarCSV}
+            >
               <Download className="h-4 w-4 mr-2" />
-              Exportar
+              Exportar CSV
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Panel de filtros */}
+      {mostrarFiltros && (
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Tipo */}
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  Tipo de acción
+                </label>
+                <select
+                  value={filtros.tipo}
+                  onChange={(e) => setFiltros({ ...filtros, tipo: e.target.value })}
+                  className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="todos">Todos</option>
+                  <option value="pedido">Pedidos</option>
+                  <option value="stock">Stock</option>
+                  <option value="usuario">Usuarios</option>
+                </select>
+              </div>
+
+              {/* Fecha desde */}
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  Desde
+                </label>
+                <input
+                  type="date"
+                  value={filtros.fechaDesde}
+                  onChange={(e) => setFiltros({ ...filtros, fechaDesde: e.target.value })}
+                  className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+
+              {/* Fecha hasta */}
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  Hasta
+                </label>
+                <input
+                  type="date"
+                  value={filtros.fechaHasta}
+                  onChange={(e) => setFiltros({ ...filtros, fechaHasta: e.target.value })}
+                  className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+            </div>
+
+            {/* Limpiar filtros */}
+            {(filtros.tipo !== 'todos' || filtros.fechaDesde || filtros.fechaHasta) && (
+              <div className="mt-4 flex justify-end">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setFiltros({ tipo: 'todos', fechaDesde: '', fechaHasta: '' })
+                    toast.success('Filtros eliminados')
+                  }}
+                >
+                  Limpiar filtros
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Tabla */}
       <Card>

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(copy \"c:\\\\Users\\\\Usuario\\\\ale-bet-manager\\\\public\\\\alebet-img.png\" \"c:\\\\Users\\\\Usuario\\\\ale-bet-manager\\\\public\\\\alebet-logo.png\")",
+      "Bash(ls:*)"
+    ]
+  }
+}

@@ -1,42 +1,46 @@
-'use client'
+"use client";
 
-import { useAuth } from '@/hooks/useAuth'
-import { signOut } from 'next-auth/react'
-import Image from 'next/image'
-import { Bell, LogOut, Settings, User as UserIcon } from 'lucide-react'
-import { useState } from 'react'
-import { Badge } from '@/components/ui/badge'
-import type { AdminContext } from '@/types'
-import toast from 'react-hot-toast'
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
+/* eslint-disable @next/next/no-img-element */
+import { Bell, LogOut, Settings, User as UserIcon } from "lucide-react";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { NotificacionesPanel } from "./NotificacionesPanel";
+import type { AdminContext } from "@/types";
+import toast from "react-hot-toast";
 
 export function Header() {
-  const { user, cambiarContexto } = useAuth()
-  const [showUserMenu, setShowUserMenu] = useState(false)
-  const [showContextMenu, setShowContextMenu] = useState(false)
+  const { user, cambiarContexto } = useAuth();
+  const router = useRouter();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showContextMenu, setShowContextMenu] = useState(false);
+  const [showNotificaciones, setShowNotificaciones] = useState(false);
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/login' })
-  }
+    await signOut({ callbackUrl: "/login" });
+  };
 
   const handleCambiarContexto = async (nuevoContexto: AdminContext) => {
     try {
-      await cambiarContexto(nuevoContexto)
-      toast.success(`Cambiado a modo ${nuevoContexto}`)
-      setShowContextMenu(false)
+      await cambiarContexto(nuevoContexto);
+      toast.success(`Cambiado a modo ${nuevoContexto}`);
+      setShowContextMenu(false);
     } catch (error) {
-      toast.error('Error al cambiar contexto')
+      toast.error("Error al cambiar contexto");
     }
-  }
+  };
 
   const getContextoBadge = () => {
-    if (user?.role !== 'admin') return null
+    if (user?.role !== "admin") return null;
 
-    const contexto = user.contexto || 'admin'
+    const contexto = user.contexto || "admin";
     const labels: Record<AdminContext, string> = {
-      admin: '⚙️ Admin',
-      vendedor: '💼 Vendedor',
-      armador: '🎯 Armador',
-    }
+      admin: "⚙️ Admin",
+      vendedor: "💼 Vendedor",
+      armador: "🎯 Armador",
+    };
 
     return (
       <button
@@ -60,36 +64,29 @@ export function Header() {
           />
         </svg>
       </button>
-    )
-  }
+    );
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-secondary-200 safe-area-top">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <Image
-              src="/logo.png"
-              alt="Ale-Bet"
-              width={40}
-              height={40}
-              className="object-contain"
+          <button
+            onClick={() => router.push("/inicio")}
+            className="hover:opacity-90 transition-opacity"
+          >
+            <img
+              src="/logo-completo.png"
+              alt="Ale-Bet Manager"
+              className="h-14 w-auto"
             />
-            <div>
-              <h1 className="text-lg font-semibold text-secondary-900">
-                Ale-Bet Manager
-              </h1>
-              {user && (
-                <p className="text-xs text-secondary-500">Hola, {user.name}</p>
-              )}
-            </div>
-          </div>
+          </button>
 
           {/* Actions */}
           <div className="flex items-center gap-3">
             {/* Context Switcher (solo admin) */}
-            {user?.role === 'admin' && (
+            {user?.role === "admin" && (
               <div className="relative">
                 {getContextoBadge()}
 
@@ -102,21 +99,21 @@ export function Header() {
                     />
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-secondary-200 py-2 z-50">
                       <button
-                        onClick={() => handleCambiarContexto('admin')}
+                        onClick={() => handleCambiarContexto("admin")}
                         className="w-full px-4 py-2 text-left hover:bg-secondary-50 flex items-center gap-2"
                       >
                         <span>⚙️</span>
                         <span className="text-sm">Administrador</span>
                       </button>
                       <button
-                        onClick={() => handleCambiarContexto('vendedor')}
+                        onClick={() => handleCambiarContexto("vendedor")}
                         className="w-full px-4 py-2 text-left hover:bg-secondary-50 flex items-center gap-2"
                       >
                         <span>💼</span>
                         <span className="text-sm">Vendedor</span>
                       </button>
                       <button
-                        onClick={() => handleCambiarContexto('armador')}
+                        onClick={() => handleCambiarContexto("armador")}
                         className="w-full px-4 py-2 text-left hover:bg-secondary-50 flex items-center gap-2"
                       >
                         <span>🎯</span>
@@ -129,10 +126,19 @@ export function Header() {
             )}
 
             {/* Notifications */}
-            <button className="relative p-2 text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100 rounded-lg transition-colors">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowNotificaciones(!showNotificaciones)}
+                className="relative p-2 text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100 rounded-lg transition-colors"
+              >
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+              </button>
+
+              {showNotificaciones && (
+                <NotificacionesPanel onClose={() => setShowNotificaciones(false)} />
+              )}
+            </div>
 
             {/* User Menu */}
             <div className="relative">
@@ -157,22 +163,19 @@ export function Header() {
                       <p className="text-xs text-secondary-500">
                         {user?.email}
                       </p>
-                      <Badge
-                        variant="secondary"
-                        className="mt-2 text-xs"
-                      >
-                        {user?.role === 'admin'
-                          ? 'Administrador'
-                          : user?.role === 'vendedor'
-                          ? 'Vendedor'
-                          : 'Armador'}
+                      <Badge variant="secondary" className="mt-2 text-xs">
+                        {user?.role === "admin"
+                          ? "Administrador"
+                          : user?.role === "vendedor"
+                            ? "Vendedor"
+                            : "Armador"}
                       </Badge>
                     </div>
 
                     <button
                       onClick={() => {
-                        setShowUserMenu(false)
-                        window.location.href = '/perfil'
+                        setShowUserMenu(false);
+                        router.push("/perfil");
                       }}
                       className="w-full px-4 py-2 text-left hover:bg-secondary-50 flex items-center gap-2 text-sm text-secondary-700"
                     >
@@ -180,16 +183,16 @@ export function Header() {
                       Mi Perfil
                     </button>
 
-                    {user?.role === 'admin' && (
+                    {user?.role === "admin" && (
                       <button
                         onClick={() => {
-                          setShowUserMenu(false)
-                          window.location.href = '/admin/panel'
+                          setShowUserMenu(false);
+                          router.push("/admin/usuarios");
                         }}
                         className="w-full px-4 py-2 text-left hover:bg-secondary-50 flex items-center gap-2 text-sm text-secondary-700"
                       >
                         <Settings className="h-4 w-4" />
-                        Panel Admin
+                        Gestión Admin
                       </button>
                     )}
 
@@ -210,5 +213,5 @@ export function Header() {
         </div>
       </div>
     </header>
-  )
+  );
 }

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { usePedidos } from '@/hooks/usePedidos'
 import { PedidoCard } from '@/components/pedidos/PedidoCard'
@@ -11,8 +11,17 @@ import type { OrderStatus } from '@/types'
 
 export default function PedidosPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user } = useAuth()
   const [filtroEstado, setFiltroEstado] = useState<OrderStatus | 'todos'>('todos')
+
+  // Aplicar filtro de URL al cargar
+  useEffect(() => {
+    const estadoParam = searchParams.get('estado')
+    if (estadoParam && estadoParam !== 'todos') {
+      setFiltroEstado(estadoParam as OrderStatus)
+    }
+  }, [searchParams])
 
   const { pedidos, isLoading, refetch } = usePedidos(
     filtroEstado === 'todos' ? undefined : filtroEstado

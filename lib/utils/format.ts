@@ -47,13 +47,15 @@ export function formatearStock(cajas: number, sueltos: number): string {
 }
 
 /**
- * Genera un número de pedido único
+ * Genera un número de pedido único con formato P-YYYYMMDD-XXXX
  */
 export function generarNumeroPedido(): string {
   const fecha = new Date()
   const año = fecha.getFullYear()
-  const timestamp = Date.now().toString().slice(-6)
-  return `PED-${año}-${timestamp}`
+  const mes = String(fecha.getMonth() + 1).padStart(2, '0')
+  const dia = String(fecha.getDate()).padStart(2, '0')
+  const timestamp = Date.now().toString().slice(-4) // últimos 4 dígitos para unicidad
+  return `P-${año}${mes}${dia}-${timestamp}`
 }
 
 /**

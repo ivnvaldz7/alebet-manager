@@ -1,6 +1,8 @@
 'use client'
 
 import { useAuth } from '@/hooks/useAuth'
+import { useProducts } from '@/hooks/useProducts'
+import { usePedidos } from '@/hooks/usePedidos'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -20,43 +22,63 @@ import { useState } from 'react'
 
 export default function InicioPage() {
   const { user } = useAuth()
+  const { productos } = useProducts()
+  const { pedidos } = usePedidos()
   const router = useRouter()
   const [actividadVisible, setActividadVisible] = useState(10)
 
-  // Stats dummy (después conectamos con API real)
+  // Calcular stats reales
+  const pedidosHoy = pedidos.filter((p) => {
+    const hoy = new Date().toISOString().split('T')[0]
+    const pedidoFecha = new Date(p.fechaCreacion).toISOString().split('T')[0]
+    return pedidoFecha === hoy
+  }).length
+
+  const enArmado = pedidos.filter((p) => p.estado === 'en_preparacion').length
+
+  const stockCritico = productos.filter(
+    (p) => p.stockTotal.totalUnidades <= p.stockMinimo
+  ).length
+
   const stats = [
     {
       title: 'Pedidos Hoy',
-      value: '12',
-      change: '+20%',
+      value: pedidosHoy.toString(),
+      change: pedidosHoy > 0 ? `+${pedidosHoy}` : '0',
       icon: Package,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
+      onClick: () => {
+        const hoy = new Date().toISOString().split('T')[0]
+        router.push(`/pedidos?fecha=${hoy}`)
+      },
     },
     {
       title: 'En Armado',
-      value: '8',
-      change: '-2',
+      value: enArmado.toString(),
+      change: enArmado > 0 ? `${enArmado} pendientes` : 'Todo al día',
       icon: TrendingUp,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
+      onClick: () => router.push('/pedidos?estado=en_preparacion'),
     },
     {
       title: 'Stock Crítico',
-      value: '3',
-      change: '',
+      value: stockCritico.toString(),
+      change: stockCritico > 0 ? 'Revisar' : 'OK',
       icon: AlertTriangle,
       color: 'text-red-600',
       bgColor: 'bg-red-50',
+      onClick: () => router.push('/stock?critico=true'),
     },
     {
-      title: 'Business Intel',
-      value: '',
-      change: 'Premium',
-      icon: Crown,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-50',
-      isPremium: true,
+      title: 'Productos',
+      value: productos.length.toString(),
+      change: 'Total activos',
+      icon: Archive,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
+      onClick: () => router.push('/stock'),
     },
   ]
 
@@ -201,9 +223,10 @@ export default function InicioPage() {
           return (
             <Card
               key={stat.title}
+              onClick={stat.onClick}
               className={`hover:shadow-md transition-shadow ${
                 stat.isPremium ? 'border-yellow-300 relative overflow-hidden' : ''
-              }`}
+              } ${stat.onClick ? 'cursor-pointer hover:scale-105' : ''}`}
             >
               {stat.isPremium && (
                 <div className="absolute top-2 right-2">

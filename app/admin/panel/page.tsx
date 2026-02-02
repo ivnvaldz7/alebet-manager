@@ -17,11 +17,20 @@ import {
 } from 'lucide-react'
 
 export default function PanelAdminPage() {
-  const { user } = useAuth()
+  const { user, isLoading } = useAuth()
   const router = useRouter()
 
-  // Verificar que sea admin
-  if (user?.role !== 'admin') {
+  // Mostrar loading mientras carga
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    )
+  }
+
+  // Verificar que sea admin (después de cargar)
+  if (!user || user.role !== 'admin') {
     router.push('/inicio')
     return null
   }

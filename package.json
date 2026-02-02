@@ -10,7 +10,8 @@
     "seed:admin": "tsx scripts/seed-admin.ts",
     "seed:productos": "tsx scripts/seed-productos.ts",
     "seed:productos:force": "tsx scripts/seed-productos-force.ts && tsx scripts/seed-productos.ts",
-    "seed:clientes": "tsx scripts/seed-clientes.ts"
+    "seed:clientes": "tsx scripts/seed-clientes.ts",
+    "seed:productos:reales": "tsx scripts/seed-productos-reales.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

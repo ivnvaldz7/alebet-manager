@@ -27,6 +27,7 @@ export const config = {
     '/productos/:path*',
     '/stock/:path*',
     '/perfil/:path*',
+    '/historial/:path*',
     '/admin/:path*',
   ],
 }
