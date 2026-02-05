@@ -20,6 +20,15 @@ export default function PerfilPage() {
     email: user?.email || '',
   })
 
+  // Estados para cambio de contraseña
+  const [showChangePassword, setShowChangePassword] = useState(false)
+  const [passwordForm, setPasswordForm] = useState({
+    passwordActual: '',
+    passwordNueva: '',
+    passwordConfirmar: '',
+  })
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+
   const getRolLabel = (rol: string) => {
     const labels: Record<string, string> = {
       admin: 'Administrador',
@@ -34,6 +43,52 @@ export default function PerfilPage() {
     if (rol === 'vendedor') return 'V'
     if (rol === 'armador') return 'R'
     return 'U'
+  }
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    // Validaciones
+    if (passwordForm.passwordNueva !== passwordForm.passwordConfirmar) {
+      toast.error('Las contraseñas no coinciden')
+      return
+    }
+
+    if (passwordForm.passwordNueva.length < 6) {
+      toast.error('La contraseña debe tener al menos 6 caracteres')
+      return
+    }
+
+    setIsChangingPassword(true)
+
+    try {
+      const response = await fetch(`/api/usuarios/${user?.id}/password`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          passwordActual: passwordForm.passwordActual,
+          passwordNueva: passwordForm.passwordNueva,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success('Contraseña actualizada correctamente')
+        setShowChangePassword(false)
+        setPasswordForm({
+          passwordActual: '',
+          passwordNueva: '',
+          passwordConfirmar: '',
+        })
+      } else {
+        toast.error(data.error || 'Error al cambiar contraseña')
+      }
+    } catch (error) {
+      toast.error('Error al cambiar contraseña')
+    } finally {
+      setIsChangingPassword(false)
+    }
   }
 
   const handleSave = async () => {
@@ -235,19 +290,130 @@ export default function PerfilPage() {
           <CardTitle>Seguridad</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between p-4 bg-secondary-50 rounded-lg">
-            <div>
-              <p className="font-medium text-secondary-900">
-                Cambiar contraseña
-              </p>
-              <p className="text-sm text-secondary-600 mt-1">
-                Actualiza tu contraseña periódicamente
-              </p>
+          {!showChangePassword ? (
+            <div className="flex items-center justify-between p-4 bg-secondary-50 rounded-lg">
+              <div>
+                <p className="font-medium text-secondary-900">
+                  Cambiar contraseña
+                </p>
+                <p className="text-sm text-secondary-600 mt-1">
+                  Actualiza tu contraseña periodicamente
+                </p>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowChangePassword(true)}
+              >
+                Cambiar
+              </Button>
             </div>
-            <Button variant="secondary" size="sm">
-              Cambiar
-            </Button>
-          </div>
+          ) : (
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  Contraseña actual <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={passwordForm.passwordActual}
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      passwordActual: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-3 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="********"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  Nueva contraseña <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={passwordForm.passwordNueva}
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      passwordNueva: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-3 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="********"
+                />
+                <p className="text-xs text-secondary-500 mt-1">
+                  Minimo 6 caracteres
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  Confirmar nueva contraseña{' '}
+                  <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={passwordForm.passwordConfirmar}
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      passwordConfirmar: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-3 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="********"
+                />
+                {passwordForm.passwordNueva &&
+                  passwordForm.passwordConfirmar &&
+                  passwordForm.passwordNueva !==
+                    passwordForm.passwordConfirmar && (
+                    <p className="text-xs text-red-600 mt-1">
+                      Las contraseñas no coinciden
+                    </p>
+                  )}
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    setShowChangePassword(false)
+                    setPasswordForm({
+                      passwordActual: '',
+                      passwordNueva: '',
+                      passwordConfirmar: '',
+                    })
+                  }}
+                  disabled={isChangingPassword}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={
+                    isChangingPassword ||
+                    !passwordForm.passwordActual ||
+                    !passwordForm.passwordNueva ||
+                    passwordForm.passwordNueva !== passwordForm.passwordConfirmar
+                  }
+                  isLoading={isChangingPassword}
+                  className="flex-1"
+                >
+                  Actualizar Contraseña
+                </Button>
+              </div>
+            </form>
+          )}
         </CardContent>
       </Card>
 

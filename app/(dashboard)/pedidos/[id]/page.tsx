@@ -65,7 +65,17 @@ export default function DetallePedidoPage({
   }
 
   const handleConfirmarPedido = async () => {
-    if (!confirm('¿Confirmar armado? Esto descontará el stock con FIFO.')) {
+    if (
+      !confirm(
+        'CONFIRMAR ARMADO\n\n' +
+          'Esta accion:\n' +
+          '- Descontara el stock automaticamente (FIFO)\n' +
+          '- Asignara lotes especificos\n' +
+          '- Registrara los movimientos\n' +
+          '- Cambiara el estado a "Aprobado"\n\n' +
+          '¿Confirmar?'
+      )
+    ) {
       return
     }
 

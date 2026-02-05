@@ -9,7 +9,7 @@ import type { Customer } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Plus, Minus, X, Package } from 'lucide-react'
+import { ArrowLeft, Plus, Minus, X, Package, AlertTriangle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { Product } from '@/types'
 
@@ -505,6 +505,64 @@ export default function NuevoPedidoPage() {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Advertencia de stock insuficiente global */}
+        {productosSeleccionados.some(
+          (item) =>
+            item.totalUnidades > item.producto.stockTotal.totalUnidades
+        ) && (
+          <div className="p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-6 w-6 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-yellow-900 mb-2">
+                  Advertencia: Stock insuficiente
+                </p>
+                <p className="text-sm text-yellow-800 mb-3">
+                  Este pedido incluye productos sin stock suficiente. Puedes
+                  crearlo de todas formas, pero el armador debera ajustar las
+                  cantidades o esperar reposicion.
+                </p>
+                <div className="bg-yellow-100 rounded-lg p-3">
+                  <p className="text-xs font-medium text-yellow-900 mb-1">
+                    Productos con problema:
+                  </p>
+                  <ul className="text-xs text-yellow-800 space-y-1">
+                    {productosSeleccionados
+                      .filter((item) => {
+                        const stockDisponible =
+                          item.producto.stockTotal.totalUnidades
+                        return item.totalUnidades > stockDisponible
+                      })
+                      .map((item) => {
+                        const stockDisponible =
+                          item.producto.stockTotal.totalUnidades
+                        const faltante = item.totalUnidades - stockDisponible
+
+                        return (
+                          <li
+                            key={item.producto._id}
+                            className="flex items-center gap-2"
+                          >
+                            <span className="w-2 h-2 bg-yellow-600 rounded-full flex-shrink-0" />
+                            <span>
+                              <strong>{item.producto.nombreCompleto}</strong>:
+                              faltan {faltante} unidades (disponible:{' '}
+                              {stockDisponible}, pedido: {item.totalUnidades})
+                            </span>
+                          </li>
+                        )
+                      })}
+                  </ul>
+                </div>
+                <p className="text-xs text-yellow-700 mt-3 italic">
+                  El pedido se marcara como &quot;Stock Insuficiente&quot; y el
+                  armador sera notificado al tomarlo.
+                </p>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Botones */}

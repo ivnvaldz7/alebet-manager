@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,6 +17,7 @@ export default function EditarUsuarioPage({
 }) {
   const resolvedParams = use(params)
   const router = useRouter()
+  const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [usuario, setUsuario] = useState<User | null>(null)
@@ -169,9 +171,77 @@ export default function EditarUsuarioPage({
                 className="h-5 w-5"
               />
               <label htmlFor="activo" className="text-sm text-secondary-700">
-                Usuario activo (puede iniciar sesión)
+                Usuario activo (puede iniciar sesion)
               </label>
             </div>
+
+            {/* Resetear contraseña (solo admin) */}
+            {user?.role === 'admin' && (
+              <div className="pt-4 border-t border-secondary-200">
+                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                  <div>
+                    <p className="font-medium text-blue-900">
+                      Resetear contraseña
+                    </p>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Establece una nueva contraseña temporal para este usuario
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={async () => {
+                      const newPassword = prompt(
+                        'Ingresa la nueva contraseña temporal para este usuario:'
+                      )
+
+                      if (!newPassword) return
+
+                      if (newPassword.length < 6) {
+                        toast.error(
+                          'La contraseña debe tener al menos 6 caracteres'
+                        )
+                        return
+                      }
+
+                      try {
+                        const response = await fetch(
+                          `/api/usuarios/${resolvedParams.id}/password`,
+                          {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              passwordNueva: newPassword,
+                            }),
+                          }
+                        )
+
+                        const data = await response.json()
+
+                        if (data.success) {
+                          toast.success('Contraseña reseteada correctamente')
+                          alert(
+                            `Contraseña actualizada.\n\n` +
+                              `Comunica al usuario su nueva contraseña temporal:\n` +
+                              `${newPassword}\n\n` +
+                              `Debe cambiarla en su primer inicio de sesion.`
+                          )
+                        } else {
+                          toast.error(
+                            data.error || 'Error al resetear contraseña'
+                          )
+                        }
+                      } catch (error) {
+                        toast.error('Error al resetear contraseña')
+                      }
+                    }}
+                  >
+                    Resetear
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

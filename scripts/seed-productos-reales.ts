@@ -6,11 +6,11 @@ async function seedProductosReales() {
   try {
     await connectDB()
 
-    console.log('🔄 Eliminando productos de prueba...')
-    await ProductModel.deleteMany({})
+    console.log('🔄 Verificando productos existentes...')
+    const productosExistentes = await ProductModel.find({})
 
     // PRODUCTOS REALES DEL DEPÓSITO ALE-BET
-    const productos = [
+    let productos = [
       // OLIVITASAN
       {
         nombre: 'OLIVITASAN',
@@ -259,13 +259,36 @@ async function seedProductosReales() {
       },
     ]
 
-    console.log('📦 Cargando productos reales...')
-    await ProductModel.insertMany(productos)
+    if (productosExistentes.length > 0) {
+      console.log(`ℹ️  Ya hay ${productosExistentes.length} productos cargados`)
+      console.log('   Solo se agregarán productos nuevos')
 
-    console.log(`✅ ${productos.length} productos cargados exitosamente:`)
-    productos.forEach((p) => {
-      console.log(`   - ${p.nombre} ${p.presentacion} (${p.stockTotal.totalUnidades} unidades)`)
-    })
+      // Filtrar productos que ya existen por nombre + presentación
+      const existentesSet = new Set(
+        productosExistentes.map(p => `${p.nombre}-${p.presentacion}`)
+      )
+
+      productos = productos.filter(p =>
+        !existentesSet.has(`${p.nombre}-${p.presentacion}`)
+      )
+
+      if (productos.length === 0) {
+        console.log('✅ Todos los productos ya están cargados')
+        process.exit(0)
+      }
+    }
+
+    if (productos.length > 0) {
+      console.log(`📦 Agregando ${productos.length} productos nuevos...`)
+      await ProductModel.insertMany(productos)
+
+      console.log(`✅ Productos agregados exitosamente:`)
+      productos.forEach((p) => {
+        console.log(`   - ${p.nombre} ${p.presentacion} (${p.stockTotal.totalUnidades} unidades)`)
+      })
+    } else {
+      console.log('✅ No hay productos nuevos para agregar')
+    }
 
     process.exit(0)
   } catch (error) {

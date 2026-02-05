@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { usePedidos } from '@/hooks/usePedidos'
 import { PedidoCard } from '@/components/pedidos/PedidoCard'
 import { Button } from '@/components/ui/button'
-import { Plus, Filter } from 'lucide-react'
+import { Plus, Search, X, Calendar } from 'lucide-react'
 import type { OrderStatus } from '@/types'
 
 export default function PedidosPage() {
@@ -14,18 +14,69 @@ export default function PedidosPage() {
   const searchParams = useSearchParams()
   const { user } = useAuth()
   const [filtroEstado, setFiltroEstado] = useState<OrderStatus | 'todos'>('todos')
+  const [fechaFiltro, setFechaFiltro] = useState<string>('')
+  const [busqueda, setBusqueda] = useState('')
+  const [ordenamiento, setOrdenamiento] = useState<'reciente' | 'antiguo' | 'cliente'>('reciente')
 
   // Aplicar filtro de URL al cargar
   useEffect(() => {
     const estadoParam = searchParams.get('estado')
+    const fechaParam = searchParams.get('fecha')
     if (estadoParam && estadoParam !== 'todos') {
       setFiltroEstado(estadoParam as OrderStatus)
     }
+    if (fechaParam) {
+      setFechaFiltro(fechaParam)
+    }
   }, [searchParams])
 
-  const { pedidos, isLoading, refetch } = usePedidos(
-    filtroEstado === 'todos' ? undefined : filtroEstado
-  )
+  const { pedidos: pedidosRaw, isLoading, refetch } = usePedidos()
+
+  // Aplicar filtros localmente
+  let pedidosFiltrados = pedidosRaw
+
+  // Filtro por busqueda
+  if (busqueda) {
+    const busquedaLower = busqueda.toLowerCase()
+    pedidosFiltrados = pedidosFiltrados.filter((pedido) => {
+      return (
+        pedido.numeroPedido.toLowerCase().includes(busquedaLower) ||
+        pedido.cliente.nombre.toLowerCase().includes(busquedaLower) ||
+        pedido.productos.some((p) =>
+          p.nombreCompleto.toLowerCase().includes(busquedaLower)
+        )
+      )
+    })
+  }
+
+  // Filtro por estado
+  if (filtroEstado !== 'todos') {
+    pedidosFiltrados = pedidosFiltrados.filter(
+      (pedido) => pedido.estado === filtroEstado
+    )
+  }
+
+  // Filtro por fecha
+  if (fechaFiltro) {
+    pedidosFiltrados = pedidosFiltrados.filter((pedido) => {
+      const fechaPedido = new Date(pedido.fechaCreacion).toISOString().split('T')[0]
+      return fechaPedido === fechaFiltro
+    })
+  }
+
+  // Ordenamiento
+  pedidosFiltrados = [...pedidosFiltrados].sort((a, b) => {
+    switch (ordenamiento) {
+      case 'reciente':
+        return new Date(b.fechaCreacion).getTime() - new Date(a.fechaCreacion).getTime()
+      case 'antiguo':
+        return new Date(a.fechaCreacion).getTime() - new Date(b.fechaCreacion).getTime()
+      case 'cliente':
+        return a.cliente.nombre.localeCompare(b.cliente.nombre)
+      default:
+        return 0
+    }
+  })
 
   const puedeCrearPedidos =
     user?.role === 'vendedor' ||
@@ -38,6 +89,8 @@ export default function PedidosPage() {
     { value: 'aprobado', label: 'Aprobados' },
     { value: 'listo', label: 'Listos' },
   ]
+
+  const hayFiltrosActivos = fechaFiltro || busqueda || filtroEstado !== 'todos'
 
   if (isLoading) {
     return (
@@ -54,8 +107,48 @@ export default function PedidosPage() {
         <div>
           <h1 className="text-2xl font-bold text-secondary-900">Pedidos</h1>
           <p className="text-secondary-600 mt-1">
-            {pedidos.length} pedido{pedidos.length !== 1 ? 's' : ''}
+            {pedidosRaw.length} pedido{pedidosRaw.length !== 1 ? 's' : ''} total
+            {pedidosFiltrados.length !== pedidosRaw.length &&
+              ` - ${pedidosFiltrados.length} filtrado${pedidosFiltrados.length !== 1 ? 's' : ''}`}
           </p>
+          {/* Badges de filtros activos */}
+          {hayFiltrosActivos && (
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              {fechaFiltro && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                  {new Date(fechaFiltro + 'T12:00:00').toLocaleDateString('es-AR')}
+                  <button
+                    onClick={() => setFechaFiltro('')}
+                    className="hover:text-blue-900 ml-1"
+                  >
+                    x
+                  </button>
+                </span>
+              )}
+              {busqueda && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                  &quot;{busqueda}&quot;
+                  <button
+                    onClick={() => setBusqueda('')}
+                    className="hover:text-purple-900 ml-1"
+                  >
+                    x
+                  </button>
+                </span>
+              )}
+              {filtroEstado !== 'todos' && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                  {estados.find((e) => e.value === filtroEstado)?.label}
+                  <button
+                    onClick={() => setFiltroEstado('todos')}
+                    className="hover:text-green-900 ml-1"
+                  >
+                    x
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {puedeCrearPedidos && (
@@ -69,7 +162,86 @@ export default function PedidosPage() {
         )}
       </div>
 
-      {/* Filtros */}
+      {/* Buscador */}
+      <div className="mb-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary-400" />
+          <input
+            type="text"
+            placeholder="Buscar por numero, cliente o producto..."
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            className="w-full pl-10 pr-10 py-3 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          />
+          {busqueda && (
+            <button
+              onClick={() => setBusqueda('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 hover:text-secondary-600"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Filtro de fecha y ordenamiento */}
+      <div className="mb-4 flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-5 w-5 text-secondary-600" />
+          <input
+            type="date"
+            value={fechaFiltro}
+            onChange={(e) => setFechaFiltro(e.target.value)}
+            className="px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+          />
+          {fechaFiltro && (
+            <button
+              onClick={() => setFechaFiltro('')}
+              className="text-sm text-secondary-600 hover:text-secondary-900"
+            >
+              Limpiar
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-secondary-600">Ordenar:</span>
+          <div className="flex gap-1">
+            <button
+              onClick={() => setOrdenamiento('reciente')}
+              className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+                ordenamiento === 'reciente'
+                  ? 'bg-primary-100 text-primary-700 font-medium'
+                  : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
+              }`}
+            >
+              Recientes
+            </button>
+            <button
+              onClick={() => setOrdenamiento('antiguo')}
+              className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+                ordenamiento === 'antiguo'
+                  ? 'bg-primary-100 text-primary-700 font-medium'
+                  : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
+              }`}
+            >
+              Antiguos
+            </button>
+            <button
+              onClick={() => setOrdenamiento('cliente')}
+              className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+                ordenamiento === 'cliente'
+                  ? 'bg-primary-100 text-primary-700 font-medium'
+                  : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
+              }`}
+            >
+              Cliente A-Z
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Filtros de estado */}
       <div className="mb-6">
         <div className="flex items-center gap-2 overflow-x-auto pb-2">
           {estados.map((estado) => (
@@ -89,26 +261,39 @@ export default function PedidosPage() {
       </div>
 
       {/* Lista */}
-      {pedidos.length === 0 ? (
+      {pedidosFiltrados.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">📦</div>
           <h3 className="text-lg font-medium text-secondary-900 mb-2">
             No hay pedidos
           </h3>
           <p className="text-secondary-600 mb-6">
-            {filtroEstado === 'todos'
-              ? 'Todavía no se creó ningún pedido'
-              : `No hay pedidos ${estados.find((e) => e.value === filtroEstado)?.label.toLowerCase()}`}
+            {hayFiltrosActivos
+              ? 'No se encontraron pedidos con los filtros aplicados'
+              : 'Todavia no se creo ningun pedido'}
           </p>
-          {puedeCrearPedidos && (
-            <Button onClick={() => router.push('/pedidos/nuevo')}>
-              Crear primer pedido
+          {hayFiltrosActivos ? (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setBusqueda('')
+                setFechaFiltro('')
+                setFiltroEstado('todos')
+              }}
+            >
+              Limpiar filtros
             </Button>
+          ) : (
+            puedeCrearPedidos && (
+              <Button onClick={() => router.push('/pedidos/nuevo')}>
+                Crear primer pedido
+              </Button>
+            )
           )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {pedidos.map((pedido) => (
+          {pedidosFiltrados.map((pedido) => (
             <PedidoCard
               key={pedido._id}
               pedido={pedido}

@@ -35,14 +35,19 @@ export default function AdminProductosPage() {
     return unidad === 'L' ? valor * 1000 : valor
   }
 
-  // Filtrar y ordenar productos
-  let productosFiltrados = busqueda
-    ? productos.filter(
-        (p) =>
-          p.nombreCompleto.toLowerCase().includes(busqueda.toLowerCase()) ||
-          p.codigoSKU.toLowerCase().includes(busqueda.toLowerCase())
-      )
-    : productos
+  // Filtrar productos con busqueda mejorada
+  let productosFiltrados = productos
+
+  if (busqueda) {
+    const busquedaLower = busqueda.toLowerCase()
+    productosFiltrados = productosFiltrados.filter(
+      (p) =>
+        p.nombreCompleto.toLowerCase().includes(busquedaLower) ||
+        p.codigoSKU.toLowerCase().includes(busquedaLower) ||
+        p.nombre.toLowerCase().includes(busquedaLower) ||
+        p.presentacion.toLowerCase().includes(busquedaLower)
+    )
+  }
 
   // Ordenar por nombre, luego por presentación (menor a mayor)
   productosFiltrados = [...productosFiltrados].sort((a, b) => {
@@ -142,10 +147,13 @@ export default function AdminProductosPage() {
                 }`}
               >
                 <CardContent className="p-6">
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
+                  {/* Header - clickeable */}
+                  <div
+                    className="flex items-start justify-between mb-4 cursor-pointer"
+                    onClick={() => router.push(`/admin/productos/${producto._id}`)}
+                  >
                     <div className="flex-1">
-                      <h3 className="font-semibold text-secondary-900 mb-1">
+                      <h3 className="font-semibold text-secondary-900 mb-1 hover:text-primary-600">
                         {producto.nombreCompleto}
                       </h3>
                       <p className="text-sm text-secondary-600">
@@ -196,7 +204,7 @@ export default function AdminProductosPage() {
                       variant="secondary"
                       size="sm"
                       onClick={() =>
-                        router.push(`/admin/productos/${producto._id}`)
+                        router.push(`/admin/productos/${producto._id}/editar`)
                       }
                       title="Editar"
                     >

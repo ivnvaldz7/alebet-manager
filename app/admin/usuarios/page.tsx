@@ -29,12 +29,27 @@ export default function UsuariosPage() {
     )
   }
 
+  const getRolLabel = (rol: string) => {
+    const labels: Record<string, string> = {
+      admin: 'Administrador',
+      vendedor: 'Vendedor',
+      armador: 'Armador',
+    }
+    return labels[rol] || rol
+  }
+
   const usuariosFiltrados = busqueda
-    ? usuarios.filter(
-        (u) =>
-          u.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-          u.email.toLowerCase().includes(busqueda.toLowerCase())
-      )
+    ? usuarios.filter((u) => {
+        const busquedaLower = busqueda.toLowerCase()
+        const rolLabel = getRolLabel(u.rol).toLowerCase()
+
+        return (
+          u.nombre.toLowerCase().includes(busquedaLower) ||
+          u.email.toLowerCase().includes(busquedaLower) ||
+          rolLabel.includes(busquedaLower) ||
+          u.rol.toLowerCase().includes(busquedaLower)
+        )
+      })
     : usuarios
 
   const getRolBadge = (rol: string) => {

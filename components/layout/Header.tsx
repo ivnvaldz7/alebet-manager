@@ -132,7 +132,7 @@ export function Header() {
                 className="relative p-2 text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100 rounded-lg transition-colors"
               >
                 <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                {/* Badge solo visible cuando hay notificaciones - TODO: conectar con estado real */}
               </button>
 
               {showNotificaciones && (
