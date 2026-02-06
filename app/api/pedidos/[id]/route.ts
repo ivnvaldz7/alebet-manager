@@ -262,6 +262,67 @@ export async function PATCH(
       })
     }
 
+    // ACCIÓN: Editar productos (solo si está pendiente)
+    if (body.productos && !action) {
+      // Solo se puede editar si está pendiente
+      if (pedido.estado !== 'pendiente') {
+        return NextResponse.json(
+          { success: false, error: 'Solo se pueden editar pedidos pendientes' },
+          { status: 400 }
+        )
+      }
+
+      // Solo admin o el vendedor que lo creó pueden editarlo
+      if (
+        session.user.role !== 'admin' &&
+        pedido.vendedor._id.toString() !== session.user.id
+      ) {
+        return NextResponse.json(
+          { success: false, error: 'No tienes permiso para editar este pedido' },
+          { status: 403 }
+        )
+      }
+
+      // Obtener info de productos
+      const productosActualizados = []
+      for (const item of body.productos) {
+        const producto = await ProductModel.findById(item.producto)
+        if (!producto) {
+          return NextResponse.json(
+            { success: false, error: `Producto no encontrado: ${item.producto}` },
+            { status: 404 }
+          )
+        }
+
+        const unidadesPorCaja = producto.stockTotal.unidadesPorCaja
+        const totalUnidades = item.cajas * unidadesPorCaja + item.sueltos
+
+        productosActualizados.push({
+          productoId: producto._id.toString(),
+          producto: {
+            _id: producto._id.toString(),
+            nombreCompleto: producto.nombreCompleto,
+            codigoSKU: producto.codigoSKU,
+            presentacion: producto.presentacion,
+          },
+          cantidadCajas: item.cajas,
+          cantidadSueltos: item.sueltos,
+          unidadesPorCaja,
+          totalUnidades,
+          lotesAsignados: [],
+        })
+      }
+
+      pedido.productos = productosActualizados
+      await pedido.save()
+
+      return NextResponse.json({
+        success: true,
+        data: pedido,
+        message: 'Pedido actualizado correctamente',
+      })
+    }
+
     return NextResponse.json(
       { success: false, error: 'Acción no válida' },
       { status: 400 }

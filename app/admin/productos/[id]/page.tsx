@@ -337,18 +337,30 @@ export default function ProductoDetallePage({
                                 size="sm"
                                 onClick={() =>
                                   router.push(
-                                    `/admin/productos/${producto._id}/lotes/${lote.numero}/editar`
+                                    `/admin/productos/${producto._id}/lotes/${lote.numero}/ajustar`
                                   )
                                 }
-                                title="Editar lote"
+                                title="Ajustar cantidades"
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
                               <Button
                                 variant="danger"
                                 size="sm"
+                                onClick={() =>
+                                  router.push(
+                                    `/admin/productos/${producto._id}/lotes/${lote.numero}/quitar`
+                                  )
+                                }
+                                title="Quitar stock (rotura/vencimiento)"
+                              >
+                                -
+                              </Button>
+                              <Button
+                                variant="danger"
+                                size="sm"
                                 onClick={() => eliminarLote(lote.numero)}
-                                title="Eliminar lote"
+                                title="Eliminar lote completo"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>

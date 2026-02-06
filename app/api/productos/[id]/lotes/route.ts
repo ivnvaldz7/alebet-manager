@@ -85,9 +85,25 @@ export async function POST(
 
     await producto.save()
 
+    // Determinar tipo de movimiento según la operación
+    const motivo = body.motivo || 'Ingreso de mercaderia'
+    let tipoMovimiento: string
+
+    if (body.tipoOperacion === 'quitar') {
+      tipoMovimiento = 'ajuste_negativo'
+    } else if (body.tipoOperacion === 'ajustar') {
+      tipoMovimiento = 'ajuste_inventario'
+    } else if (motivo.toLowerCase().includes('rotura') || motivo.toLowerCase().includes('vencimiento')) {
+      tipoMovimiento = 'ajuste_negativo'
+    } else if (motivo.toLowerCase().includes('ajuste')) {
+      tipoMovimiento = unidades >= 0 ? 'ajuste_positivo' : 'ajuste_negativo'
+    } else {
+      tipoMovimiento = 'ingreso_lote'
+    }
+
     // Registrar movimiento de stock
     await StockMovementModel.create({
-      tipo: 'ingreso_compra',
+      tipo: tipoMovimiento,
       producto: {
         _id: producto._id.toString(),
         nombreCompleto: producto.nombreCompleto,
@@ -97,11 +113,11 @@ export async function POST(
         numero: numeroLote,
         cajasAntes: 0,
         sueltosAntes: 0,
-        cajasDespues: cajas,
-        sueltosDespues: sueltos,
+        cajasDespues: Math.abs(cajas),
+        sueltosDespues: Math.abs(sueltos),
         unidadesCambiadas: unidades,
       },
-      motivo: body.motivo || 'Ingreso de mercaderia',
+      motivo,
       usuario: {
         _id: session.user.id,
         nombre: session.user.name,

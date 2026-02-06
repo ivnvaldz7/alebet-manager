@@ -35,7 +35,17 @@ const StockMovementSchema = new Schema<StockMovement>(
   {
     tipo: {
       type: String,
-      enum: ['ingreso_lote', 'egreso_pedido', 'ajuste_manual', 'ajuste_inventario'],
+      enum: [
+        'ingreso_lote',
+        'ingreso_compra',
+        'ingreso_produccion',
+        'egreso_pedido',
+        'egreso_venta',
+        'ajuste_manual',
+        'ajuste_inventario',
+        'ajuste_positivo',
+        'ajuste_negativo',
+      ],
       required: true,
     },
     producto: {

@@ -130,6 +130,22 @@ const OrderSchema = new Schema<Order>(
       type: String,
       default: '',
     },
+    // Campos de cancelación
+    motivoCancelacion: {
+      type: String,
+      default: null,
+    },
+    canceladoPor: {
+      type: {
+        _id: String,
+        nombre: String,
+      },
+      default: null,
+    },
+    fechaCancelacion: {
+      type: Date,
+      default: null,
+    },
     etiquetas: {
       generadas: {
         type: Boolean,

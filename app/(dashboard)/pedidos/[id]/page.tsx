@@ -15,7 +15,9 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
+  Edit,
 } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { formatearFecha, formatearFechaHora } from '@/lib/utils/format'
 import { useState, use } from 'react'
 
@@ -93,15 +95,53 @@ export default function DetallePedidoPage({
   }
 
   const handleCancelar = async () => {
-    if (!confirm('¿Estás seguro de cancelar este pedido?')) {
+    const motivo = prompt(
+      '¿Por que deseas cancelar este pedido?\n\n' +
+        'Ejemplos:\n' +
+        '- Cliente cancelo\n' +
+        '- Sin stock disponible\n' +
+        '- Error en pedido\n' +
+        '- Duplicado'
+    )
+
+    if (!motivo || motivo.trim() === '') {
+      toast.error('Debes especificar un motivo')
+      return
+    }
+
+    if (
+      !confirm(
+        `CANCELAR PEDIDO\n\n` +
+          `Pedido: ${pedido.numeroPedido}\n` +
+          `Cliente: ${pedido.cliente.nombre}\n` +
+          `Motivo: ${motivo}\n\n` +
+          `Esta accion no se puede deshacer.\n\n` +
+          `¿Confirmar cancelacion?`
+      )
+    ) {
       return
     }
 
     setIsProcessing(true)
-    const success = await cancelarPedido()
-    setIsProcessing(false)
-    if (success) {
-      router.push('/pedidos')
+    try {
+      const response = await fetch(`/api/pedidos/${pedido._id}/cancelar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ motivo }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success('Pedido cancelado correctamente')
+        refetch()
+      } else {
+        toast.error(data.error || 'Error al cancelar pedido')
+      }
+    } catch (error) {
+      toast.error('Error al cancelar pedido')
+    } finally {
+      setIsProcessing(false)
     }
   }
 
@@ -341,6 +381,23 @@ export default function DetallePedidoPage({
               <p className="text-secondary-900">{pedido.observaciones}</p>
             </div>
           )}
+
+          {/* Info de cancelación */}
+          {pedido.estado === 'cancelado' && pedido.motivoCancelacion && (
+            <div className="pt-3 border-t border-red-200 bg-red-50 -mx-6 px-6 py-3 -mb-6 rounded-b-lg">
+              <p className="text-red-800 font-medium mb-1">Pedido cancelado</p>
+              <p className="text-sm text-red-700">
+                <strong>Motivo:</strong> {pedido.motivoCancelacion}
+              </p>
+              {pedido.canceladoPor && (
+                <p className="text-sm text-red-600 mt-1">
+                  Cancelado por: {pedido.canceladoPor.nombre}
+                  {pedido.fechaCancelacion &&
+                    ` - ${formatearFechaHora(pedido.fechaCancelacion)}`}
+                </p>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -387,18 +444,33 @@ export default function DetallePedidoPage({
           </Button>
         )}
 
-        {/* Cancelar */}
-        {pedido.estado !== 'listo' && pedido.estado !== 'cancelado' && (
-          <Button
-            variant="danger"
-            onClick={handleCancelar}
-            disabled={isProcessing}
-            className="w-full"
-          >
-            <XCircle className="h-5 w-5 mr-2" />
-            Cancelar Pedido
-          </Button>
-        )}
+        {/* Editar (solo pendiente, vendedor/admin) */}
+        {pedido.estado === 'pendiente' &&
+          (user?.role === 'admin' || user?.role === 'vendedor') && (
+            <Button
+              onClick={() => router.push(`/pedidos/${pedido._id}/editar`)}
+              variant="secondary"
+              className="w-full"
+            >
+              <Edit className="h-5 w-5 mr-2" />
+              Editar Pedido
+            </Button>
+          )}
+
+        {/* Cancelar (pendiente o en_preparacion, vendedor/admin) */}
+        {(pedido.estado === 'pendiente' ||
+          pedido.estado === 'en_preparacion') &&
+          (user?.role === 'admin' || user?.role === 'vendedor') && (
+            <Button
+              variant="danger"
+              onClick={handleCancelar}
+              disabled={isProcessing}
+              className="w-full"
+            >
+              <XCircle className="h-5 w-5 mr-2" />
+              Cancelar Pedido
+            </Button>
+          )}
       </div>
     </div>
   )
