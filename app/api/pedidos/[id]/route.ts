@@ -1,141 +1,141 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth/auth-config'
-import connectDB from '@/lib/db/mongoose'
-import OrderModel from '@/lib/models/Order'
-import ProductModel from '@/lib/models/Product'
-import StockMovementModel from '@/lib/models/StockMovement'
-import { descontarStockFIFO } from '@/lib/utils/fifo'
-import { recalcularStockTotal } from '@/lib/utils/stock-calculator'
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/auth-config";
+import connectDB from "@/lib/db/mongoose";
+import OrderModel from "@/lib/models/Order";
+import ProductModel from "@/lib/models/Product";
+import StockMovementModel from "@/lib/models/StockMovement";
+import { descontarStockFIFO } from "@/lib/utils/fifo";
+import { recalcularStockTotal } from "@/lib/utils/stock-calculator";
 
 // GET - Obtener pedido por ID
 export async function GET(
   request: NextRequest,
-  props: { params: Promise<{ id: string }> }
+  props: { params: Promise<{ id: string }> },
 ) {
-  const params = await props.params
+  const params = await props.params;
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json(
-        { success: false, error: 'No autorizado' },
-        { status: 401 }
-      )
+        { success: false, error: "No autorizado" },
+        { status: 401 },
+      );
     }
 
-    await connectDB()
+    await connectDB();
 
-    const pedido = await OrderModel.findById(params.id).lean()
+    const pedido = await OrderModel.findById(params.id).lean();
 
     if (!pedido) {
       return NextResponse.json(
-        { success: false, error: 'Pedido no encontrado' },
-        { status: 404 }
-      )
+        { success: false, error: "Pedido no encontrado" },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json({
       success: true,
       data: pedido,
-    })
+    });
   } catch (error: any) {
-    console.error('Error en GET /api/pedidos/[id]:', error)
+    console.error("Error en GET /api/pedidos/[id]:", error);
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 500 }
-    )
+      { status: 500 },
+    );
   }
 }
 
 // PATCH - Actualizar pedido (tomar, armar, confirmar)
 export async function PATCH(
   request: NextRequest,
-  props: { params: Promise<{ id: string }> }
+  props: { params: Promise<{ id: string }> },
 ) {
-  const params = await props.params
+  const params = await props.params;
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json(
-        { success: false, error: 'No autorizado' },
-        { status: 401 }
-      )
+        { success: false, error: "No autorizado" },
+        { status: 401 },
+      );
     }
 
-    const body = await request.json()
-    const { action } = body
+    const body = await request.json();
+    const { action } = body;
 
-    await connectDB()
+    await connectDB();
 
-    const pedido = await OrderModel.findById(params.id)
+    const pedido = await OrderModel.findById(params.id);
 
     if (!pedido) {
       return NextResponse.json(
-        { success: false, error: 'Pedido no encontrado' },
-        { status: 404 }
-      )
+        { success: false, error: "Pedido no encontrado" },
+        { status: 404 },
+      );
     }
 
     // ACCIÓN: Tomar pedido (armador)
-    if (action === 'tomar') {
-      if (pedido.estado !== 'pendiente') {
+    if (action === "tomar") {
+      if (pedido.estado !== "pendiente") {
         return NextResponse.json(
-          { success: false, error: 'El pedido ya no está pendiente' },
-          { status: 400 }
-        )
+          { success: false, error: "El pedido ya no está pendiente" },
+          { status: 400 },
+        );
       }
 
-      pedido.estado = 'en_preparacion'
+      pedido.estado = "en_preparacion";
       pedido.armadoPor = {
         _id: session.user.id,
         nombre: session.user.name,
-      }
-      pedido.fechaInicioPreparacion = new Date()
+      };
+      pedido.fechaInicioPreparacion = new Date();
 
-      await pedido.save()
+      await pedido.save();
 
       return NextResponse.json({
         success: true,
         data: pedido,
-        message: 'Pedido tomado exitosamente',
-      })
+        message: "Pedido tomado exitosamente",
+      });
     }
 
     // ACCIÓN: Confirmar armado (descuenta stock con FIFO)
-    if (action === 'confirmar') {
-      if (pedido.estado !== 'en_preparacion') {
+    if (action === "confirmar") {
+      if (pedido.estado !== "en_preparacion") {
         return NextResponse.json(
           {
             success: false,
-            error: 'El pedido no está en preparación',
+            error: "El pedido no está en preparación",
           },
-          { status: 400 }
-        )
+          { status: 400 },
+        );
       }
 
       // Verificar que quien confirma es quien tomó el pedido
-      if (pedido.armadoPor?._id !== session.user.id) {
+      if (String(pedido.armadoPor?._id) !== String(session.user.id)) {
         return NextResponse.json(
           {
             success: false,
-            error: 'Solo quien tomó el pedido puede confirmarlo',
+            error: "Solo quien tomó el pedido puede confirmarlo",
           },
-          { status: 403 }
-        )
+          { status: 403 },
+        );
       }
 
       // Descontar stock con FIFO para cada producto
       for (const item of pedido.productos) {
-        const producto = await ProductModel.findById(item.productoId)
+        const producto = await ProductModel.findById(item.productoId);
 
-        if (!producto) continue
+        if (!producto) continue;
 
         // Aplicar FIFO
         const resultado = descontarStockFIFO(
           producto,
           item.cantidadCajas,
-          item.cantidadSueltos
-        )
+          item.cantidadSueltos,
+        );
 
         if (!resultado.success) {
           return NextResponse.json(
@@ -143,23 +143,23 @@ export async function PATCH(
               success: false,
               error: `Error en ${producto.nombreCompleto}: ${resultado.error}`,
             },
-            { status: 400 }
-          )
+            { status: 400 },
+          );
         }
 
         // Actualizar lotes del producto
         for (const loteAfectado of resultado.lotesAfectados) {
           const lote = producto.lotes.find(
-            (l) => l.numero === loteAfectado.numero
-          )
+            (l) => l.numero === loteAfectado.numero,
+          );
 
           if (lote) {
-            lote.cajas = loteAfectado.cajasRestantes
-            lote.sueltos = loteAfectado.sueltosRestantes
+            lote.cajas = loteAfectado.cajasRestantes;
+            lote.sueltos = loteAfectado.sueltosRestantes;
             lote.unidades =
               loteAfectado.cajasRestantes *
                 producto.stockTotal.unidadesPorCaja +
-              loteAfectado.sueltosRestantes
+              loteAfectado.sueltosRestantes;
 
             // Registrar lotes asignados en el pedido
             item.lotesAsignados.push({
@@ -167,11 +167,11 @@ export async function PATCH(
               cajas: loteAfectado.cajasDescontadas,
               sueltos: loteAfectado.sueltosDescontados,
               unidades: loteAfectado.unidadesDescontadas,
-            })
+            });
 
             // Registrar movimiento de stock
             await StockMovementModel.create({
-              tipo: 'egreso_pedido',
+              tipo: "egreso_pedido",
               producto: {
                 _id: producto._id.toString(),
                 nombreCompleto: producto.nombreCompleto,
@@ -180,8 +180,7 @@ export async function PATCH(
               lote: {
                 numero: loteAfectado.numero,
                 cajasAntes:
-                  loteAfectado.cajasRestantes +
-                  loteAfectado.cajasDescontadas,
+                  loteAfectado.cajasRestantes + loteAfectado.cajasDescontadas,
                 sueltosAntes:
                   loteAfectado.sueltosRestantes +
                   loteAfectado.sueltosDescontados,
@@ -195,143 +194,145 @@ export async function PATCH(
                 _id: session.user.id,
                 nombre: session.user.name,
                 rol: session.user.role,
-                contexto: session.user.contexto,
+                contexto: session.user.contexto || undefined,
               },
               fecha: new Date(),
-            })
+            });
           }
         }
 
         // Eliminar lotes agotados
-        producto.lotes = producto.lotes.filter((l) => l.unidades > 0)
+        producto.lotes = producto.lotes.filter((l) => l.unidades > 0);
 
         // Recalcular stock total
-        producto.stockTotal = recalcularStockTotal(producto)
+        producto.stockTotal = recalcularStockTotal(producto);
 
-        await producto.save()
+        await producto.save();
       }
 
       // Actualizar pedido
-      pedido.estado = 'aprobado'
-      pedido.fechaAprobado = new Date()
-      await pedido.save()
+      pedido.estado = "aprobado";
+      pedido.fechaAprobado = new Date();
+      await pedido.save();
 
       return NextResponse.json({
         success: true,
         data: pedido,
-        message: 'Pedido confirmado y stock descontado',
-      })
+        message: "Pedido confirmado y stock descontado",
+      });
     }
 
     // ACCIÓN: Marcar como listo
-    if (action === 'listo') {
-      if (pedido.estado !== 'aprobado') {
+    if (action === "listo") {
+      if (pedido.estado !== "aprobado") {
         return NextResponse.json(
-          { success: false, error: 'El pedido no está aprobado' },
-          { status: 400 }
-        )
+          { success: false, error: "El pedido no está aprobado" },
+          { status: 400 },
+        );
       }
 
-      pedido.estado = 'listo'
-      pedido.fechaListo = new Date()
-      await pedido.save()
+      pedido.estado = "listo";
+      pedido.fechaListo = new Date();
+      await pedido.save();
 
       return NextResponse.json({
         success: true,
         data: pedido,
-        message: 'Pedido marcado como listo',
-      })
+        message: "Pedido marcado como listo",
+      });
     }
 
     // ACCIÓN: Cancelar
-    if (action === 'cancelar') {
-      if (pedido.estado === 'listo' || pedido.estado === 'cancelado') {
+    if (action === "cancelar") {
+      if (pedido.estado === "listo" || pedido.estado === "cancelado") {
         return NextResponse.json(
-          { success: false, error: 'No se puede cancelar este pedido' },
-          { status: 400 }
-        )
+          { success: false, error: "No se puede cancelar este pedido" },
+          { status: 400 },
+        );
       }
 
-      pedido.estado = 'cancelado'
-      await pedido.save()
+      pedido.estado = "cancelado";
+      await pedido.save();
 
       return NextResponse.json({
         success: true,
         data: pedido,
-        message: 'Pedido cancelado',
-      })
+        message: "Pedido cancelado",
+      });
     }
 
     // ACCIÓN: Editar productos (solo si está pendiente)
     if (body.productos && !action) {
       // Solo se puede editar si está pendiente
-      if (pedido.estado !== 'pendiente') {
+      if (pedido.estado !== "pendiente") {
         return NextResponse.json(
-          { success: false, error: 'Solo se pueden editar pedidos pendientes' },
-          { status: 400 }
-        )
+          { success: false, error: "Solo se pueden editar pedidos pendientes" },
+          { status: 400 },
+        );
       }
 
       // Solo admin o el vendedor que lo creó pueden editarlo
       if (
-        session.user.role !== 'admin' &&
-        pedido.vendedor._id.toString() !== session.user.id
+        session.user.role !== "admin" &&
+        String((pedido as any).creadoPor) !== String(session.user.id)
       ) {
         return NextResponse.json(
-          { success: false, error: 'No tienes permiso para editar este pedido' },
-          { status: 403 }
-        )
+          {
+            success: false,
+            error: "No tienes permiso para editar este pedido",
+          },
+          { status: 403 },
+        );
       }
 
       // Obtener info de productos
-      const productosActualizados = []
+      const productosActualizados = [];
       for (const item of body.productos) {
-        const producto = await ProductModel.findById(item.producto)
+        const producto = await ProductModel.findById(item.producto);
         if (!producto) {
           return NextResponse.json(
-            { success: false, error: `Producto no encontrado: ${item.producto}` },
-            { status: 404 }
-          )
+            {
+              success: false,
+              error: `Producto no encontrado: ${item.producto}`,
+            },
+            { status: 404 },
+          );
         }
 
-        const unidadesPorCaja = producto.stockTotal.unidadesPorCaja
-        const totalUnidades = item.cajas * unidadesPorCaja + item.sueltos
+        const unidadesPorCaja = producto.stockTotal.unidadesPorCaja;
+        const totalUnidades = item.cajas * unidadesPorCaja + item.sueltos;
 
         productosActualizados.push({
           productoId: producto._id.toString(),
-          producto: {
-            _id: producto._id.toString(),
-            nombreCompleto: producto.nombreCompleto,
-            codigoSKU: producto.codigoSKU,
-            presentacion: producto.presentacion,
-          },
+          nombreCompleto: producto.nombreCompleto,
+          codigoSKU: producto.codigoSKU,
           cantidadCajas: item.cajas,
           cantidadSueltos: item.sueltos,
           unidadesPorCaja,
           totalUnidades,
           lotesAsignados: [],
-        })
+        });
       }
 
-      pedido.productos = productosActualizados
-      await pedido.save()
+      pedido.productos = productosActualizados;
+      await pedido.save();
 
       return NextResponse.json({
         success: true,
         data: pedido,
-        message: 'Pedido actualizado correctamente',
-      })
+        message: "Pedido actualizado correctamente",
+      });
     }
 
     return NextResponse.json(
-      { success: false, error: 'Acción no válida' },
-      { status: 400 }
-    )
+      { success: false, error: "Acción no válida" },
+      { status: 400 },
+    );
   } catch (error: any) {
-    console.error('Error en PATCH /api/pedidos/[id]:', error)
+    console.error("Error en PATCH /api/pedidos/[id]:", error);
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 500 }
-    )
+      { status: 500 },
+    );
   }
 }

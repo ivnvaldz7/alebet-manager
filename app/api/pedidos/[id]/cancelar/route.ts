@@ -64,7 +64,7 @@ export async function POST(
     // Solo admin o el vendedor que lo creó pueden cancelarlo
     if (
       session.user.role !== 'admin' &&
-      pedido.vendedor._id.toString() !== session.user.id
+      String(pedido.creadoPor._id) !== String(session.user.id)
     ) {
       return NextResponse.json(
         { success: false, error: 'No tienes permiso para cancelar este pedido' },

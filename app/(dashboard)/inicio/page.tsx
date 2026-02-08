@@ -224,43 +224,21 @@ export default function InicioPage() {
             <Card
               key={stat.title}
               onClick={stat.onClick}
-              className={`hover:shadow-md transition-shadow ${
-                stat.isPremium ? 'border-yellow-300 relative overflow-hidden' : ''
-              } ${stat.onClick ? 'cursor-pointer hover:scale-105' : ''}`}
+              className="hover:shadow-md transition-shadow cursor-pointer hover:scale-105"
             >
-              {stat.isPremium && (
-                <div className="absolute top-2 right-2">
-                  <Badge variant="warning" className="text-xs">
-                    Premium
-                  </Badge>
-                </div>
-              )}
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-sm text-secondary-600 mb-1">
                       {stat.title}
                     </p>
-                    {stat.isPremium ? (
-                      <div className="mt-2">
-                        <p className="text-sm text-secondary-700 font-medium">
-                          Métricas de negocio
-                        </p>
-                        <p className="text-xs text-secondary-500 mt-1">
-                          Próximamente
-                        </p>
-                      </div>
-                    ) : (
-                      <>
-                        <p className="text-3xl font-bold text-secondary-900">
-                          {stat.value}
-                        </p>
-                        {stat.change && (
-                          <p className="text-xs text-secondary-500 mt-2">
-                            {stat.change}
-                          </p>
-                        )}
-                      </>
+                    <p className="text-3xl font-bold text-secondary-900">
+                      {stat.value}
+                    </p>
+                    {stat.change && (
+                      <p className="text-xs text-secondary-500 mt-2">
+                        {stat.change}
+                      </p>
                     )}
                   </div>
                   <div className={`p-3 rounded-lg ${stat.bgColor}`}>

@@ -95,6 +95,7 @@ export default function DetallePedidoPage({
   }
 
   const handleCancelar = async () => {
+    if (!pedido) return
     const motivo = prompt(
       '¿Por que deseas cancelar este pedido?\n\n' +
         'Ejemplos:\n' +

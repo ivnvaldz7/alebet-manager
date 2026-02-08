@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { usePedidos } from '@/hooks/usePedidos'
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Plus, Search, X, Calendar } from 'lucide-react'
 import type { OrderStatus } from '@/types'
 
-export default function PedidosPage() {
+function PedidosContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user } = useAuth()
@@ -303,5 +303,19 @@ export default function PedidosPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function PedidosPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        </div>
+      }
+    >
+      <PedidosContent />
+    </Suspense>
   )
 }

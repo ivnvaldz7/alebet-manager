@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ArrowLeft } from 'lucide-react'
 import { useUsuarios } from '@/hooks/useUsuarios'
+import type { UserRole } from '@/types'
 
 export default function NuevoUsuarioPage() {
   const router = useRouter()
@@ -16,7 +17,7 @@ export default function NuevoUsuarioPage() {
     nombre: '',
     email: '',
     password: '',
-    rol: 'vendedor',
+    rol: 'vendedor' as UserRole,
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -96,7 +97,7 @@ export default function NuevoUsuarioPage() {
               <select
                 value={formData.rol}
                 onChange={(e) =>
-                  setFormData({ ...formData, rol: e.target.value })
+                  setFormData({ ...formData, rol: e.target.value as UserRole })
                 }
                 className="w-full px-4 py-3 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >

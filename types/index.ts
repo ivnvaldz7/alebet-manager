@@ -3,7 +3,16 @@
 export type UserRole = 'admin' | 'vendedor' | 'armador'
 export type AdminContext = 'admin' | 'vendedor' | 'armador'
 export type OrderStatus = 'pendiente' | 'en_preparacion' | 'aprobado' | 'listo' | 'cancelado'
-export type MovementType = 'ingreso_lote' | 'egreso_pedido' | 'ajuste_manual'
+export type MovementType =
+  | 'ingreso_lote'
+  | 'ingreso_compra'
+  | 'ingreso_produccion'
+  | 'egreso_pedido'
+  | 'egreso_venta'
+  | 'ajuste_manual'
+  | 'ajuste_inventario'
+  | 'ajuste_positivo'
+  | 'ajuste_negativo'
 
 // =============== USER ===============
 
@@ -177,6 +186,12 @@ export interface Order {
   stockInsuficiente: boolean
   notificacionEnviada: boolean
   observaciones: string
+  motivoCancelacion?: string | null
+  canceladoPor?: {
+    _id: string
+    nombre: string
+  } | null
+  fechaCancelacion?: Date | null
   etiquetas: {
     generadas: boolean
     cantidadTotal: number

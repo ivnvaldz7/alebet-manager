@@ -57,8 +57,23 @@ export async function POST(
       )
     }
 
-    // Generar número de lote
-    const numeroLote = generarProximoLote(producto.codigoSKU, producto.lotes)
+    // Número de lote: usar el manual si viene, sino autogenerar
+    let numeroLote: string
+    if (body.numeroLote && body.numeroLote.trim() !== '') {
+      // Validar que no exista ya
+      const loteExistente = producto.lotes.find(
+        (l: any) => l.numero.toUpperCase() === body.numeroLote.trim().toUpperCase()
+      )
+      if (loteExistente) {
+        return NextResponse.json(
+          { success: false, error: `El lote ${body.numeroLote} ya existe en este producto` },
+          { status: 400 }
+        )
+      }
+      numeroLote = body.numeroLote.trim().toUpperCase()
+    } else {
+      numeroLote = generarProximoLote(producto.codigoSKU, producto.lotes)
+    }
 
     // Calcular unidades
     const unidades = calcularUnidadesTotales(cajas, sueltos, producto.stockTotal.unidadesPorCaja)
@@ -122,7 +137,7 @@ export async function POST(
         _id: session.user.id,
         nombre: session.user.name,
         rol: session.user.role,
-        contexto: session.user.contexto,
+        contexto: session.user.contexto || undefined,
       },
       fecha: new Date(),
     })

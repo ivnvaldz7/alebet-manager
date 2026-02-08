@@ -4,10 +4,10 @@ import { useProducts } from '@/hooks/useProducts'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Package, AlertTriangle, Search } from 'lucide-react'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
-export default function StockPage() {
+function StockContent() {
   const { productos, isLoading } = useProducts()
   const [busqueda, setBusqueda] = useState('')
   const searchParams = useSearchParams()
@@ -164,5 +164,19 @@ export default function StockPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function StockPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        </div>
+      }
+    >
+      <StockContent />
+    </Suspense>
   )
 }

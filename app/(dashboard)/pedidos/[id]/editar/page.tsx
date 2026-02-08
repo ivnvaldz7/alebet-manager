@@ -3,7 +3,6 @@
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { usePedido } from '@/hooks/usePedidos'
-import { useClientes } from '@/hooks/useClientes'
 import { useProducts } from '@/hooks/useProducts'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -26,7 +25,6 @@ export default function EditarPedidoPage({
   const resolvedParams = use(params)
   const router = useRouter()
   const { pedido, isLoading: pedidoLoading } = usePedido(resolvedParams.id)
-  const { clientes } = useClientes()
   const { productos } = useProducts()
 
   const [productosSeleccionados, setProductosSeleccionados] = useState<
@@ -42,13 +40,13 @@ export default function EditarPedidoPage({
         .map((item) => {
           // Buscar el producto actualizado en la lista de productos
           const productoActualizado = productos.find(
-            (p) => p._id === item.producto._id
+            (p) => String(p._id) === String(item.productoId)
           )
           if (!productoActualizado) return null
           return {
             producto: productoActualizado,
-            cajas: item.cajas,
-            sueltos: item.sueltos,
+            cajas: item.cantidadCajas,
+            sueltos: item.cantidadSueltos,
           }
         })
         .filter(Boolean) as ProductoSeleccionado[]

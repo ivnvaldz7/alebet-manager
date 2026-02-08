@@ -18,6 +18,8 @@ export default function AgregarStockPage({
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [producto, setProducto] = useState<Product | null>(null)
+  const [numeroLote, setNumeroLote] = useState('')
+  const [loteAutomatico, setLoteAutomatico] = useState(true)
   const [formData, setFormData] = useState({
     cajas: 0,
     sueltos: 0,
@@ -40,6 +42,25 @@ export default function AgregarStockPage({
       }))
     }
   }, [formData.fechaProduccion])
+
+  const generarLoteSugerido = () => {
+    if (!producto) return ''
+    const prefijo = producto.codigoSKU
+    const numeros = producto.lotes
+      .map((l) => {
+        const match = l.numero.match(/\d+$/)
+        return match ? parseInt(match[0], 10) : 0
+      })
+      .filter((num) => !isNaN(num))
+    const maxNumero = numeros.length > 0 ? Math.max(...numeros) : 0
+    return `${prefijo}${(maxNumero + 1).toString().padStart(4, '0')}`
+  }
+
+  useEffect(() => {
+    if (producto && loteAutomatico) {
+      setNumeroLote(generarLoteSugerido())
+    }
+  }, [producto, loteAutomatico])
 
   const fetchProducto = async () => {
     try {
@@ -87,6 +108,7 @@ export default function AgregarStockPage({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            numeroLote: numeroLote || generarLoteSugerido(),
             cajas: formData.cajas,
             sueltos: formData.sueltos,
             fechaProduccion: formData.fechaProduccion,
@@ -166,6 +188,50 @@ export default function AgregarStockPage({
             <CardTitle>Nuevo Lote</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Numero de Lote */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-secondary-700">
+                  Numero de Lote <span className="text-red-500">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setLoteAutomatico(!loteAutomatico)}
+                  className="text-xs text-primary-600 hover:text-primary-700"
+                >
+                  {loteAutomatico ? 'Ingresar manual' : 'Usar automatico'}
+                </button>
+              </div>
+              <div className="relative">
+                <input
+                  type="text"
+                  required
+                  value={numeroLote}
+                  onChange={(e) => {
+                    setNumeroLote(e.target.value.toUpperCase())
+                    setLoteAutomatico(false)
+                  }}
+                  disabled={loteAutomatico}
+                  className={`w-full px-4 py-3 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono ${
+                    loteAutomatico ? 'bg-secondary-50 text-secondary-600' : ''
+                  }`}
+                  placeholder={generarLoteSugerido()}
+                />
+                {loteAutomatico && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <span className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded">
+                      Automatico
+                    </span>
+                  </div>
+                )}
+              </div>
+              {!loteAutomatico && (
+                <p className="text-xs text-secondary-500 mt-1">
+                  Sugerido: <span className="font-mono font-semibold">{generarLoteSugerido()}</span>
+                </p>
+              )}
+            </div>
+
             {/* Cantidades */}
             <div>
               <label className="block text-sm font-medium text-secondary-700 mb-3">

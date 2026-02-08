@@ -113,7 +113,7 @@ export async function POST(
         _id: session.user.id,
         nombre: session.user.name,
         rol: session.user.role,
-        contexto: session.user.contexto,
+        contexto: session.user.contexto || undefined,
       },
       fecha: new Date(),
     })

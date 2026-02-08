@@ -3,7 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import connectDB from '@/lib/db/mongoose'
 import UserModel from '@/lib/models/User'
-import type { User, UserWithoutPassword } from '@/types'
+import type { User, UserWithoutPassword, UserRole, AdminContext } from '@/types'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -84,8 +84,8 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string
         session.user.email = token.email as string
         session.user.name = token.name as string
-        session.user.role = token.role as string
-        session.user.contexto = token.contexto as string
+        session.user.role = token.role as UserRole
+        session.user.contexto = (token.contexto as AdminContext) || null
         session.user.activo = token.activo as boolean
       }
       return session

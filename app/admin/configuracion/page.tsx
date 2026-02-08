@@ -205,7 +205,7 @@ export default function ConfiguracionPage() {
               </p>
             </div>
             <Button
-              variant="default"
+              variant="primary"
               size="sm"
               onClick={handleActivarNotificaciones}
             >

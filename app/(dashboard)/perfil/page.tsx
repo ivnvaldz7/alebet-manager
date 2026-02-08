@@ -159,7 +159,7 @@ export default function PerfilPage() {
                   onChange={(e) => {
                     const file = e.target.files?.[0]
                     if (file) {
-                      toast.info('Función de foto próximamente')
+                      toast('Función de foto próximamente', { icon: 'ℹ️' })
                     }
                   }}
                 />

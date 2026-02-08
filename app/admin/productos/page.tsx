@@ -19,7 +19,7 @@ import toast from 'react-hot-toast'
 
 export default function AdminProductosPage() {
   const router = useRouter()
-  const { productos, isLoading, mutate } = useProducts()
+  const { productos, isLoading, refetch } = useProducts()
   const [busqueda, setBusqueda] = useState('')
 
   // Función para extraer el número de ML/L de la presentación
@@ -71,7 +71,7 @@ export default function AdminProductosPage() {
 
       if (data.success) {
         toast.success('Producto desactivado')
-        mutate()
+        refetch()
       } else {
         toast.error(data.error || 'Error al desactivar')
       }

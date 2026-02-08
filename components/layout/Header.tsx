@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 /* eslint-disable @next/next/no-img-element */
 import { Bell, LogOut, Settings, User as UserIcon } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { NotificacionesPanel } from "./NotificacionesPanel";
+import { useNotificaciones } from "@/hooks/useNotificaciones";
 import type { AdminContext } from "@/types";
 import toast from "react-hot-toast";
 
@@ -17,6 +18,21 @@ export function Header() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [showNotificaciones, setShowNotificaciones] = useState(false);
+
+  const {
+    notificaciones,
+    noLeidas,
+    isLoading: notifLoading,
+    markAsRead,
+    markAllAsRead,
+    requestPushPermission,
+    timeAgo,
+  } = useNotificaciones();
+
+  // Pedir permiso de notificaciones push al cargar
+  useEffect(() => {
+    requestPushPermission();
+  }, [requestPushPermission]);
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: "/login" });
@@ -132,11 +148,21 @@ export function Header() {
                 className="relative p-2 text-secondary-600 hover:text-secondary-900 hover:bg-secondary-100 rounded-lg transition-colors"
               >
                 <Bell className="h-5 w-5" />
-                {/* Badge solo visible cuando hay notificaciones - TODO: conectar con estado real */}
+                {noLeidas > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
+                )}
               </button>
 
               {showNotificaciones && (
-                <NotificacionesPanel onClose={() => setShowNotificaciones(false)} />
+                <NotificacionesPanel
+                  onClose={() => setShowNotificaciones(false)}
+                  notificaciones={notificaciones}
+                  noLeidas={noLeidas}
+                  isLoading={notifLoading}
+                  markAsRead={markAsRead}
+                  markAllAsRead={markAllAsRead}
+                  timeAgo={timeAgo}
+                />
               )}
             </div>
 
