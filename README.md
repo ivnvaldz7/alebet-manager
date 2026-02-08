@@ -1,314 +1,193 @@
 # Ale-Bet Manager
 
-Sistema de Gestion Logistica para Laboratorio Veterinario
+Sistema de gestion logistica para laboratorio veterinario.
 
-## Descripcion
+## Stack
 
-Ale-Bet Manager es una plataforma web integral para administrar la logistica de un laboratorio/distribuidora de productos veterinarios. Permite gestionar pedidos, controlar inventario con sistema FIFO, administrar usuarios con diferentes roles y mantener trazabilidad completa de operaciones.
-
-## Tecnologias
-
-| Categoria | Tecnologia |
-|-----------|------------|
+| | Tecnologia |
+|---|---|
 | Framework | Next.js 16 (App Router) |
-| Frontend | React 19, TypeScript 5 |
+| Frontend | React 19, TypeScript 5 (strict) |
 | Estilos | Tailwind CSS 4 |
-| Base de Datos | MongoDB + Mongoose |
-| Autenticacion | NextAuth.js |
-| UI Components | Radix UI, Lucide Icons |
+| Base de Datos | MongoDB + Mongoose 9 |
+| Autenticacion | NextAuth.js v4 (JWT) |
+| UI | Lucide Icons, Radix UI |
 
-## Estructura del Proyecto
+## Inicio rapido
 
-```
-ale-bet-manager/
-├── app/
-│   ├── (auth)/           # Login y autenticacion
-│   ├── (dashboard)/      # Panel principal (vendedor/armador)
-│   │   ├── inicio/       # Dashboard con estadisticas
-│   │   ├── pedidos/      # Crear y ver pedidos
-│   │   ├── stock/        # Ver inventario
-│   │   └── historial/    # Historial de actividades
-│   ├── (admin)/          # Panel administrativo
-│   │   ├── panel/        # Dashboard admin
-│   │   ├── usuarios/     # Gestion de usuarios
-│   │   ├── productos/    # Gestion de productos
-│   │   └── reportes/     # Reportes y analisis
-│   └── api/              # Endpoints REST
-├── components/           # Componentes React
-├── lib/
-│   ├── models/           # Modelos Mongoose
-│   ├── utils/            # Funciones utilitarias
-│   └── auth/             # Configuracion NextAuth
-├── hooks/                # React Hooks personalizados
-├── types/                # Tipos TypeScript
-└── scripts/              # Seeds de base de datos
-```
-
-## Roles de Usuario
-
-| Rol | Permisos |
-|-----|----------|
-| **Admin** | Acceso total: usuarios, productos, pedidos, reportes, configuracion |
-| **Vendedor** | Crear pedidos, ver sus pedidos, consultar stock |
-| **Armador** | Ver pedidos pendientes, armar/preparar pedidos, consultar stock |
-
-## Funcionalidades Principales
-
-### Gestion de Pedidos
-- Crear pedidos con busqueda de clientes frecuentes
-- Busqueda y seleccion de productos con autocomplete
-- Validacion de stock en tiempo real
-- Alertas de stock insuficiente
-- Estados: Pendiente → En Preparacion → Aprobado → Listo
-
-### Control de Inventario
-- Gestion de productos con variantes y presentaciones
-- Sistema de lotes con FIFO automatico
-- Alertas de stock minimo
-- Control de fechas de vencimiento
-- Movimientos de stock con auditoria completa
-
-### Sistema de Lotes (FIFO)
-```
-Cada producto puede tener multiples lotes:
-- Numero de lote
-- Cantidad (cajas + sueltos)
-- Fecha de produccion
-- Fecha de vencimiento
-- Orden FIFO (se usa el mas antiguo primero)
-```
-
-### Dashboard
-- Estadisticas en tiempo real
-- Pedidos del dia
-- Stock critico
-- Actividad reciente
-- Acciones rapidas segun rol
-
-## Instalacion
-
-### Requisitos
-- Node.js 18+
-- MongoDB 6+
-- npm o yarn
-
-### Pasos
-
-1. Clonar el repositorio
 ```bash
-git clone <url-repositorio>
-cd ale-bet-manager
-```
-
-2. Instalar dependencias
-```bash
+# 1. Instalar dependencias
 npm install
-```
 
-3. Configurar variables de entorno
-```bash
+# 2. Configurar entorno
 cp .env.example .env.local
 ```
 
 Editar `.env.local`:
+
 ```env
 MONGODB_URI=mongodb://localhost:27017/ale-bet-manager
-NEXTAUTH_SECRET=tu-secret-seguro-aqui
+NEXTAUTH_SECRET=tu-secret-seguro
 NEXTAUTH_URL=http://localhost:3000
 ```
 
-4. Cargar datos iniciales (opcional)
 ```bash
-# Crear usuario admin
+# 3. Cargar datos iniciales
 npm run seed:admin
-
-# Cargar productos de ejemplo
-npm run seed:productos
-
-# Cargar clientes de ejemplo
+npm run seed:productos:reales
 npm run seed:clientes
-```
 
-5. Iniciar el servidor
-```bash
+# 4. Iniciar
 npm run dev
 ```
 
-6. Acceder a la aplicacion
-```
-http://localhost:3000
-```
+Acceder en `http://localhost:3000`
 
-## Scripts Disponibles
-
-| Comando | Descripcion |
-|---------|-------------|
-| `npm run dev` | Inicia servidor de desarrollo |
-| `npm run build` | Compila para produccion |
-| `npm run start` | Inicia servidor de produccion |
-| `npm run lint` | Ejecuta linter |
-| `npm run seed:admin` | Crea usuario administrador |
-| `npm run seed:productos` | Carga productos de prueba |
-| `npm run seed:clientes` | Carga clientes de prueba |
-| `npm run seed:productos:reales` | Carga productos reales del laboratorio |
-
-## Modelos de Datos
-
-### Usuario
-```typescript
-{
-  nombre: string
-  email: string (unico)
-  password: string (encriptada)
-  rol: 'admin' | 'vendedor' | 'armador'
-  activo: boolean
-}
-```
-
-### Producto
-```typescript
-{
-  nombre: string           // Ej: "OLIVITASAN"
-  variante: string | null  // Ej: "FORTE"
-  presentacion: string     // Ej: "500ML"
-  codigoSKU: string
-  stockTotal: {
-    cajas: number
-    sueltos: number
-    unidadesPorCaja: number
-    totalUnidades: number
-  }
-  lotes: Lote[]
-  stockMinimo: number
-}
-```
-
-### Pedido
-```typescript
-{
-  numeroPedido: string     // Ej: "PED-2025-001"
-  cliente: {
-    nombre: string
-    direccion: { calle, numero, localidad }
-  }
-  productos: ProductoPedido[]
-  estado: 'pendiente' | 'en_preparacion' | 'aprobado' | 'listo' | 'cancelado'
-  creadoPor: Usuario
-  armadoPor: Usuario | null
-}
-```
-
-### Movimiento de Stock
-```typescript
-{
-  tipo: 'ingreso_lote' | 'egreso_pedido' | 'ajuste_manual'
-  producto: Producto
-  lote: { numero, cambios }
-  motivo: string
-  usuario: Usuario
-  fecha: Date
-}
-```
-
-## Flujo de Trabajo
-
-### Vendedor
-```
-1. Inicia sesion
-2. Dashboard → "Nuevo Pedido"
-3. Busca/selecciona cliente
-4. Agrega productos (con validacion de stock)
-5. Envia pedido
-6. Pedido queda en estado "Pendiente"
-```
-
-### Armador
-```
-1. Inicia sesion
-2. Ve pedidos pendientes
-3. Toma un pedido → Estado cambia a "En Preparacion"
-4. Sistema asigna lotes automaticamente (FIFO)
-5. Prepara fisicamente el pedido
-6. Confirma armado → Estado cambia a "Listo"
-7. Stock se descuenta automaticamente
-```
-
-### Admin
-```
-- Gestiona usuarios (crear, editar, desactivar)
-- Gestiona productos (crear, agregar lotes, ajustar stock)
-- Ve reportes y estadisticas
-- Accede a todas las funciones del sistema
-- Puede cambiar su "contexto" para ver como vendedor o armador
-```
-
-## API Endpoints
-
-### Autenticacion
-- `POST /api/auth/[...nextauth]` - Login/Logout
-
-### Pedidos
-- `GET /api/pedidos` - Listar pedidos
-- `POST /api/pedidos` - Crear pedido
-- `GET /api/pedidos/[id]` - Obtener pedido
-- `PATCH /api/pedidos/[id]` - Actualizar pedido
-- `POST /api/pedidos/[id]/armar` - Iniciar armado
-- `POST /api/pedidos/[id]/listo` - Marcar como listo
-
-### Productos
-- `GET /api/productos` - Listar productos
-- `POST /api/productos` - Crear producto
-- `GET /api/productos/[id]` - Obtener producto
-- `PATCH /api/productos/[id]` - Actualizar producto
-- `POST /api/productos/[id]/lotes` - Agregar lote
-- `POST /api/productos/[id]/ajustar-stock` - Ajustar stock
-
-### Clientes
-- `GET /api/clientes` - Listar clientes
-- `POST /api/clientes` - Crear cliente
-- `GET /api/clientes/buscar` - Buscar clientes
-
-### Usuarios
-- `GET /api/usuarios` - Listar usuarios
-- `POST /api/usuarios` - Crear usuario
-- `PATCH /api/usuarios/[id]` - Actualizar usuario
-
-## Caracteristicas Tecnicas
-
-- **TypeScript**: Tipado estatico en todo el proyecto
-- **App Router**: Estructura moderna de Next.js
-- **Server Components**: Renderizado del lado del servidor
-- **API Routes**: Backend serverless integrado
-- **Middleware**: Proteccion de rutas por rol
-- **FIFO Automatico**: Gestion inteligente de lotes
-- **Auditoria**: Registro de todos los movimientos
-- **PWA**: Instalable como aplicacion movil
-- **Responsive**: Diseno adaptable a moviles y tablets
-
-## Seguridad
-
-- Passwords encriptadas con bcrypt
-- Sesiones JWT con NextAuth
-- Middleware de autenticacion en rutas protegidas
-- Validacion de permisos por rol
-- Proteccion CSRF integrada
-
-## Credenciales por Defecto
-
-Despues de ejecutar `npm run seed:admin`:
+### Credenciales por defecto
 
 ```
 Email: admin@alebet.com
 Password: admin123
 ```
 
-**Importante**: Cambiar estas credenciales en produccion.
+> Cambiar en produccion.
 
-## Soporte
+## Roles
 
-Para reportar problemas o solicitar funciones:
-- Crear un issue en el repositorio
-- Contactar al equipo de desarrollo
+| Rol | Permisos |
+|-----|----------|
+| **Admin** | Acceso total. Puede cambiar contexto a vendedor/armador. |
+| **Vendedor** | Crear pedidos, ver sus pedidos, consultar stock |
+| **Armador** | Tomar pedidos pendientes, armar, confirmar, consultar stock |
+
+## Flujo de pedidos
+
+```
+Vendedor crea pedido → Pendiente
+  ↓
+Armador toma pedido → En Preparacion (lotes FIFO asignados)
+  ↓
+Armador confirma → Aprobado (stock descontado)
+  ↓
+Admin marca listo → Listo
+  ↓
+(o cualquier momento) → Cancelado (stock revertido si aplica)
+```
+
+## Estructura
+
+```
+app/
+├── (auth)/login/          # Login
+├── (dashboard)/
+│   ├── inicio/            # Dashboard con stats
+│   ├── pedidos/           # CRUD pedidos + detalle + editar
+│   ├── stock/             # Vista de inventario
+│   ├── perfil/            # Perfil de usuario
+│   └── historial/         # Historial de actividad
+├── admin/
+│   ├── productos/         # CRUD productos + lotes + stock
+│   ├── usuarios/          # CRUD usuarios
+│   ├── reportes/          # Reportes
+│   └── configuracion/     # Config del sistema
+└── api/                   # REST API
+components/
+├── layout/                # Header, NotificacionesPanel
+├── pedidos/               # PedidoCard, etc.
+└── ui/                    # Button, Card, Input, Badge, etc.
+hooks/                     # useAuth, usePedidos, useProducts, useNotificaciones
+lib/
+├── models/                # User, Product, Order, Customer, StockMovement
+├── utils/                 # FIFO, stock calculator
+└── auth/                  # NextAuth config
+types/                     # TypeScript interfaces
+scripts/                   # Seeds de base de datos
+```
+
+## API
+
+### Pedidos
+| Metodo | Ruta | Accion |
+|--------|------|--------|
+| GET | `/api/pedidos` | Listar pedidos (filtro por estado) |
+| POST | `/api/pedidos` | Crear pedido |
+| GET | `/api/pedidos/[id]` | Obtener pedido |
+| PATCH | `/api/pedidos/[id]` | Acciones: `tomar`, `confirmar`, `listo`, `editar` |
+| POST | `/api/pedidos/[id]/cancelar` | Cancelar pedido |
+
+### Productos
+| Metodo | Ruta | Accion |
+|--------|------|--------|
+| GET | `/api/productos` | Listar productos activos |
+| POST | `/api/productos` | Crear producto |
+| GET | `/api/productos/[id]` | Obtener producto |
+| PATCH | `/api/productos/[id]` | Actualizar producto |
+| POST | `/api/productos/[id]/lotes` | Agregar lote |
+| PATCH | `/api/productos/[id]/lotes/[numero]` | Editar lote |
+| POST | `/api/productos/[id]/lotes/[numero]/quitar` | Quitar lote |
+
+### Usuarios
+| Metodo | Ruta | Accion |
+|--------|------|--------|
+| GET | `/api/usuarios` | Listar usuarios |
+| POST | `/api/usuarios` | Crear usuario |
+| GET | `/api/usuarios/[id]` | Obtener usuario |
+| PATCH | `/api/usuarios/[id]` | Actualizar usuario |
+| PATCH | `/api/usuarios/[id]/password` | Cambiar password |
+
+### Clientes
+| Metodo | Ruta | Accion |
+|--------|------|--------|
+| GET | `/api/clientes` | Listar/buscar clientes |
+
+## Scripts
+
+| Comando | Descripcion |
+|---------|-------------|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Build de produccion |
+| `npm run start` | Servidor de produccion |
+| `npm run lint` | Linter |
+| `npm run seed:admin` | Crear usuario admin |
+| `npm run seed:productos` | Productos de ejemplo |
+| `npm run seed:productos:reales` | Productos reales del laboratorio |
+| `npm run seed:clientes` | Clientes de ejemplo |
+
+## Deploy
+
+### Vercel (recomendado)
+
+1. Conectar repositorio en [vercel.com](https://vercel.com)
+2. Configurar variables de entorno:
+   - `MONGODB_URI` — Connection string de MongoDB Atlas
+   - `NEXTAUTH_SECRET` — Secret aleatorio (`openssl rand -base64 32`)
+   - `NEXTAUTH_URL` — URL del dominio (ej: `https://alebet.vercel.app`)
+3. Deploy automatico con cada push a `main`
+
+### Variables de entorno requeridas
+
+| Variable | Descripcion | Ejemplo |
+|----------|-------------|---------|
+| `MONGODB_URI` | Conexion MongoDB | `mongodb+srv://user:pass@cluster.mongodb.net/alebet` |
+| `NEXTAUTH_SECRET` | Secret JWT | (generar con `openssl rand -base64 32`) |
+| `NEXTAUTH_URL` | URL base de la app | `https://tu-dominio.com` |
+
+## Caracteristicas tecnicas
+
+- **FIFO automatico**: Al armar pedidos, los lotes mas antiguos se usan primero
+- **Auditoria**: Cada movimiento de stock queda registrado con usuario, fecha y motivo
+- **Notificaciones**: Panel dinamico con alertas de pedidos y stock critico + push del browser
+- **PWA**: Instalable como app en celular
+- **Multi-contexto**: Admin puede operar como vendedor o armador sin cambiar de cuenta
+- **Responsive**: Optimizado para uso en celular/tablet
+
+## Seguridad
+
+- Passwords con bcrypt
+- Sesiones JWT (NextAuth)
+- Middleware de autenticacion en todas las rutas
+- Validacion de permisos por rol en cada endpoint
+- Comparaciones de ObjectId con `String()` para evitar falsos negativos
 
 ---
 

@@ -18,6 +18,10 @@ export const metadata: Metadata = {
   title: 'Ale-Bet Manager',
   description: 'Sistema de gestión logística para laboratorio veterinario',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/icon.svg',
+    apple: '/apple-touch-icon.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',

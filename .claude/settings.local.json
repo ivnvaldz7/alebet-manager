@@ -5,7 +5,10 @@
       "Bash(ls:*)",
       "Bash(npm run build:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(copy \"c:\\\\Users\\\\Usuario\\\\ale-bet-manager\\\\public\\\\logo.png\" \"c:\\\\Users\\\\Usuario\\\\ale-bet-manager\\\\public\\\\icons\\\\icon-192x192.png\")",
+      "Bash(copy \"c:\\\\Users\\\\Usuario\\\\ale-bet-manager\\\\public\\\\logo.png\" \"c:\\\\Users\\\\Usuario\\\\ale-bet-manager\\\\public\\\\icons\\\\icon-512x512.png\")",
+      "Bash(copy \"c:\\\\Users\\\\Usuario\\\\ale-bet-manager\\\\public\\\\logo.png\" \"c:\\\\Users\\\\Usuario\\\\ale-bet-manager\\\\public\\\\apple-touch-icon.png\")"
     ]
   }
 }
