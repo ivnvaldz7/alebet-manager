@@ -91,7 +91,7 @@ export default function AdminProductosPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-secondary-900">
             Gestión de Productos
@@ -102,7 +102,7 @@ export default function AdminProductosPage() {
         </div>
         <Button
           onClick={() => router.push('/admin/productos/nuevo')}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 w-full sm:w-auto justify-center"
         >
           <Plus className="h-5 w-5" />
           Nuevo Producto

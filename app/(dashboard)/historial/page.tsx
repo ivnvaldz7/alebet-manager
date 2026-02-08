@@ -5,10 +5,95 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Search, Download, Filter } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import toast from 'react-hot-toast'
+import { usePedidos } from '@/hooks/usePedidos'
+import type { Order } from '@/types'
+
+interface ActivityItem {
+  id: string
+  fecha: Date
+  accion: string
+  detalle: string
+  usuario: string
+  tipo: 'pedido'
+  status: string
+}
+
+function buildActivity(pedidos: Order[]): ActivityItem[] {
+  const eventos: ActivityItem[] = []
+
+  pedidos.forEach((p) => {
+    eventos.push({
+      id: `${p._id}-creado`,
+      fecha: new Date(p.fechaCreacion),
+      accion: 'Pedido creado',
+      detalle: `${p.numeroPedido} - ${p.cliente.nombre}`,
+      usuario: p.creadoPor?.nombre || 'Sistema',
+      tipo: 'pedido',
+      status: 'pendiente',
+    })
+    if (p.fechaInicioPreparacion) {
+      eventos.push({
+        id: `${p._id}-prep`,
+        fecha: new Date(p.fechaInicioPreparacion),
+        accion: 'Pedido en preparación',
+        detalle: `${p.numeroPedido} - ${p.cliente.nombre}`,
+        usuario: p.armadoPor?.nombre || 'Armador',
+        tipo: 'pedido',
+        status: 'info',
+      })
+    }
+    if (p.fechaAprobado) {
+      eventos.push({
+        id: `${p._id}-aprobado`,
+        fecha: new Date(p.fechaAprobado),
+        accion: 'Pedido aprobado',
+        detalle: `${p.numeroPedido} - ${p.cliente.nombre}`,
+        usuario: p.armadoPor?.nombre || 'Sistema',
+        tipo: 'pedido',
+        status: 'success',
+      })
+    }
+    if (p.fechaListo) {
+      eventos.push({
+        id: `${p._id}-listo`,
+        fecha: new Date(p.fechaListo),
+        accion: 'Pedido listo',
+        detalle: `${p.numeroPedido} - ${p.cliente.nombre}`,
+        usuario: p.armadoPor?.nombre || 'Sistema',
+        tipo: 'pedido',
+        status: 'success',
+      })
+    }
+    if (p.fechaCancelacion) {
+      eventos.push({
+        id: `${p._id}-cancelado`,
+        fecha: new Date(p.fechaCancelacion),
+        accion: 'Pedido cancelado',
+        detalle: `${p.numeroPedido} - ${p.cliente.nombre}`,
+        usuario: p.canceladoPor?.nombre || 'Sistema',
+        tipo: 'pedido',
+        status: 'cancelado',
+      })
+    }
+  })
+
+  return eventos.sort((a, b) => b.fecha.getTime() - a.fecha.getTime())
+}
+
+function formatFecha(fecha: Date) {
+  return fecha.toLocaleString('es-AR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
 
 export default function HistorialPage() {
+  const { pedidos, isLoading } = usePedidos()
   const [busqueda, setBusqueda] = useState('')
   const [mostrarFiltros, setMostrarFiltros] = useState(false)
   const [filtros, setFiltros] = useState({
@@ -17,40 +102,10 @@ export default function HistorialPage() {
     fechaHasta: '',
   })
 
-  // Datos dummy - después conectar con API real
-  const historialCompleto = [
-    {
-      id: 1,
-      fecha: '2025-02-01 14:30',
-      accion: 'Pedido creado',
-      detalle: 'PED-2025-001 - DROVET',
-      usuario: 'Juan Pérez',
-      tipo: 'pedido',
-      status: 'pendiente',
-    },
-    {
-      id: 2,
-      fecha: '2025-02-01 14:15',
-      accion: 'Stock actualizado',
-      detalle: 'OLIVITASAN 500 ML - Confirmación armado',
-      usuario: 'Sistema',
-      tipo: 'stock',
-      status: 'success',
-    },
-    {
-      id: 3,
-      fecha: '2025-02-01 13:45',
-      accion: 'Pedido armado',
-      detalle: 'PED-2025-002 confirmado',
-      usuario: 'Carlos Gómez',
-      tipo: 'pedido',
-      status: 'success',
-    },
-  ]
+  const historialCompleto = useMemo(() => buildActivity(pedidos), [pedidos])
 
   let historialFiltrado = historialCompleto
 
-  // Filtro por búsqueda
   if (busqueda) {
     historialFiltrado = historialFiltrado.filter(
       (item) =>
@@ -60,32 +115,28 @@ export default function HistorialPage() {
     )
   }
 
-  // Filtro por tipo
   if (filtros.tipo !== 'todos') {
     historialFiltrado = historialFiltrado.filter((item) => item.tipo === filtros.tipo)
   }
 
-  // Filtro por fecha desde
   if (filtros.fechaDesde) {
     historialFiltrado = historialFiltrado.filter(
-      (item) => item.fecha >= filtros.fechaDesde
+      (item) => item.fecha >= new Date(filtros.fechaDesde)
     )
   }
 
-  // Filtro por fecha hasta
   if (filtros.fechaHasta) {
-    historialFiltrado = historialFiltrado.filter(
-      (item) => item.fecha <= filtros.fechaHasta
-    )
+    const hasta = new Date(filtros.fechaHasta)
+    hasta.setHours(23, 59, 59, 999)
+    historialFiltrado = historialFiltrado.filter((item) => item.fecha <= hasta)
   }
 
-  // Función de exportar a CSV
   const exportarCSV = () => {
     const csvContent = [
       ['Fecha', 'Acción', 'Detalle', 'Usuario', 'Estado'].join(','),
       ...historialFiltrado.map((item) =>
         [
-          item.fecha,
+          formatFecha(item.fecha),
           `"${item.accion}"`,
           `"${item.detalle}"`,
           item.usuario,
@@ -97,21 +148,17 @@ export default function HistorialPage() {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
-
     link.setAttribute('href', url)
     link.setAttribute('download', `historial_${new Date().toISOString().split('T')[0]}.csv`)
     link.style.visibility = 'hidden'
-
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-
     toast.success('Historial exportado correctamente')
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-secondary-900">
           Historial Completo
@@ -160,12 +207,10 @@ export default function HistorialPage() {
         </CardContent>
       </Card>
 
-      {/* Panel de filtros */}
       {mostrarFiltros && (
         <Card className="mb-6">
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Tipo */}
               <div>
                 <label className="block text-sm font-medium text-secondary-700 mb-2">
                   Tipo de acción
@@ -177,12 +222,8 @@ export default function HistorialPage() {
                 >
                   <option value="todos">Todos</option>
                   <option value="pedido">Pedidos</option>
-                  <option value="stock">Stock</option>
-                  <option value="usuario">Usuarios</option>
                 </select>
               </div>
-
-              {/* Fecha desde */}
               <div>
                 <label className="block text-sm font-medium text-secondary-700 mb-2">
                   Desde
@@ -194,8 +235,6 @@ export default function HistorialPage() {
                   className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
-
-              {/* Fecha hasta */}
               <div>
                 <label className="block text-sm font-medium text-secondary-700 mb-2">
                   Hasta
@@ -208,8 +247,6 @@ export default function HistorialPage() {
                 />
               </div>
             </div>
-
-            {/* Limpiar filtros */}
             {(filtros.tipo !== 'todos' || filtros.fechaDesde || filtros.fechaHasta) && (
               <div className="mt-4 flex justify-end">
                 <Button
@@ -228,72 +265,129 @@ export default function HistorialPage() {
         </Card>
       )}
 
-      {/* Tabla */}
       <Card>
         <CardHeader>
           <CardTitle>
-            {historialFiltrado.length} registro
-            {historialFiltrado.length !== 1 ? 's' : ''}
+            {isLoading ? 'Cargando...' : `${historialFiltrado.length} registro${historialFiltrado.length !== 1 ? 's' : ''}`}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b border-secondary-200">
-                <tr>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-secondary-700">
-                    Fecha
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-secondary-700">
-                    Acción
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-secondary-700">
-                    Detalle
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-secondary-700">
-                    Usuario
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-secondary-700">
-                    Estado
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {historialFiltrado.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="border-b border-secondary-100 hover:bg-secondary-50 transition-colors"
-                  >
-                    <td className="py-3 px-4 text-sm text-secondary-600">
-                      {item.fecha}
-                    </td>
-                    <td className="py-3 px-4 text-sm font-medium text-secondary-900">
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+            </div>
+          ) : historialFiltrado.length === 0 ? (
+            <p className="text-sm text-secondary-500 text-center py-8">
+              Sin registros para mostrar
+            </p>
+          ) : (
+            <>
+            {/* Mobile: cards */}
+            <div className="md:hidden divide-y divide-secondary-100">
+              {historialFiltrado.map((item) => (
+                <div key={item.id} className="py-3 flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-secondary-900 truncate">
                       {item.accion}
-                    </td>
-                    <td className="py-3 px-4 text-sm text-secondary-700">
+                    </p>
+                    <p className="text-sm text-secondary-600 truncate mt-0.5">
                       {item.detalle}
-                    </td>
-                    <td className="py-3 px-4 text-sm text-secondary-600">
-                      {item.usuario}
-                    </td>
-                    <td className="py-3 px-4">
-                      <Badge
-                        variant={
-                          item.status === 'success'
-                            ? 'success'
-                            : item.status === 'warning'
-                            ? 'warning'
-                            : 'info'
-                        }
-                      >
-                        {item.status}
-                      </Badge>
-                    </td>
+                    </p>
+                    <p className="text-xs text-secondary-400 mt-1">
+                      {item.usuario} · {formatFecha(item.fecha)}
+                    </p>
+                  </div>
+                  <Badge
+                    variant={
+                      item.status === 'success'
+                        ? 'success'
+                        : item.status === 'cancelado'
+                        ? 'secondary'
+                        : item.status === 'info'
+                        ? 'info'
+                        : 'warning'
+                    }
+                  >
+                    {item.status === 'pendiente'
+                      ? 'nuevo'
+                      : item.status === 'info'
+                      ? 'en prep.'
+                      : item.status === 'success'
+                      ? 'ok'
+                      : item.status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="border-b border-secondary-200">
+                  <tr>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-secondary-700">
+                      Fecha
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-secondary-700">
+                      Acción
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-secondary-700">
+                      Detalle
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-secondary-700">
+                      Usuario
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-secondary-700">
+                      Estado
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {historialFiltrado.map((item) => (
+                    <tr
+                      key={item.id}
+                      className="border-b border-secondary-100 hover:bg-secondary-50 transition-colors"
+                    >
+                      <td className="py-3 px-4 text-sm text-secondary-600">
+                        {formatFecha(item.fecha)}
+                      </td>
+                      <td className="py-3 px-4 text-sm font-medium text-secondary-900">
+                        {item.accion}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-secondary-700">
+                        {item.detalle}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-secondary-600">
+                        {item.usuario}
+                      </td>
+                      <td className="py-3 px-4">
+                        <Badge
+                          variant={
+                            item.status === 'success'
+                              ? 'success'
+                              : item.status === 'cancelado'
+                              ? 'secondary'
+                              : item.status === 'info'
+                              ? 'info'
+                              : 'warning'
+                          }
+                        >
+                          {item.status === 'pendiente'
+                            ? 'nuevo'
+                            : item.status === 'info'
+                            ? 'en prep.'
+                            : item.status === 'success'
+                            ? 'ok'
+                            : item.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

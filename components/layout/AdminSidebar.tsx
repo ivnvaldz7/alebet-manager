@@ -72,29 +72,33 @@ export function AdminSidebar() {
       </aside>
 
       {/* Tabs Mobile */}
-      <div className="md:hidden bg-white border-b border-secondary-200 overflow-x-auto">
-        <div className="flex px-4 gap-2 min-w-max">
-          {menuItems.map((item) => {
-            const Icon = item.icon
-            const isActive = pathname.startsWith(item.path)
+      <div className="md:hidden relative bg-white border-b border-secondary-200">
+        <div className="overflow-x-auto scrollbar-none">
+          <div className="flex px-3 min-w-max">
+            {menuItems.map((item) => {
+              const Icon = item.icon
+              const isActive = pathname.startsWith(item.path)
 
-            return (
-              <button
-                key={item.path}
-                onClick={() => router.push(item.path)}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-3 whitespace-nowrap border-b-2 transition-colors',
-                  isActive
-                    ? 'border-primary-600 text-primary-700 font-medium'
-                    : 'border-transparent text-secondary-700'
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                <span className="text-sm">{item.label}</span>
-              </button>
-            )
-          })}
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => router.push(item.path)}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-3 whitespace-nowrap border-b-2 transition-colors',
+                    isActive
+                      ? 'border-primary-600 text-primary-700 font-medium'
+                      : 'border-transparent text-secondary-600 active:text-secondary-900'
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span className="text-sm">{item.label}</span>
+                </button>
+              )
+            })}
+          </div>
         </div>
+        {/* Fade gradient to indicate overflow */}
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none" />
       </div>
     </>
   )

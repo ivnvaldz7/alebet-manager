@@ -82,57 +82,64 @@ export default function InicioPage() {
     },
   ]
 
-  // Actividad reciente (últimos 50, pero mostramos de a 10)
-  const actividadCompleta = [
-    {
-      action: 'Pedido #PED-2025-001 creado',
-      user: 'Juan Pérez',
-      time: 'Hace 5 min',
-      status: 'pendiente',
-    },
-    {
-      action: 'Stock actualizado: Olivitasan 500ML',
-      user: 'Sistema',
-      time: 'Hace 12 min',
-      status: 'success',
-    },
-    {
-      action: 'Pedido #PED-2025-002 armado',
-      user: 'Carlos Gómez',
-      time: 'Hace 25 min',
-      status: 'success',
-    },
-    {
-      action: 'Nuevo cliente: Veterinaria Sur',
-      user: 'María López',
-      time: 'Hace 1 hora',
-      status: 'success',
-    },
-    {
-      action: 'Pedido #PED-2025-003 cancelado',
-      user: 'Juan Pérez',
-      time: 'Hace 2 horas',
-      status: 'cancelado',
-    },
-    {
-      action: 'Stock crítico: Aminoácidos 20ML',
-      user: 'Sistema',
-      time: 'Hace 3 horas',
-      status: 'warning',
-    },
-    {
-      action: 'Pedido #PED-2025-004 listo',
-      user: 'Carlos Gómez',
-      time: 'Hace 4 horas',
-      status: 'success',
-    },
-    {
-      action: 'Nuevo lote: Energizante 100ML',
-      user: user?.name || 'Admin',
-      time: 'Hace 5 horas',
-      status: 'success',
-    },
-  ]
+  // Derivar actividad real de los pedidos cargados
+  const tiempoRelativo = (fecha: string | Date) => {
+    const diff = Date.now() - new Date(fecha).getTime()
+    const mins = Math.floor(diff / 60000)
+    if (mins < 1) return 'Ahora'
+    if (mins < 60) return `Hace ${mins} min`
+    const hs = Math.floor(mins / 60)
+    if (hs < 24) return `Hace ${hs} h`
+    const dias = Math.floor(hs / 24)
+    return `Hace ${dias} día${dias > 1 ? 's' : ''}`
+  }
+
+  const actividadCompleta = pedidos
+    .flatMap((p) => {
+      const eventos: { action: string; user: string; date: Date; status: string }[] = []
+      eventos.push({
+        action: `Pedido ${p.numeroPedido} creado`,
+        user: p.creadoPor?.nombre || 'Sistema',
+        date: new Date(p.fechaCreacion),
+        status: 'pendiente',
+      })
+      if (p.fechaInicioPreparacion) {
+        eventos.push({
+          action: `Pedido ${p.numeroPedido} en preparación`,
+          user: p.armadoPor?.nombre || 'Armador',
+          date: new Date(p.fechaInicioPreparacion),
+          status: 'info',
+        })
+      }
+      if (p.fechaAprobado) {
+        eventos.push({
+          action: `Pedido ${p.numeroPedido} aprobado`,
+          user: p.armadoPor?.nombre || 'Sistema',
+          date: new Date(p.fechaAprobado),
+          status: 'success',
+        })
+      }
+      if (p.fechaListo) {
+        eventos.push({
+          action: `Pedido ${p.numeroPedido} listo`,
+          user: p.armadoPor?.nombre || 'Sistema',
+          date: new Date(p.fechaListo),
+          status: 'success',
+        })
+      }
+      if (p.fechaCancelacion) {
+        eventos.push({
+          action: `Pedido ${p.numeroPedido} cancelado`,
+          user: p.canceladoPor?.nombre || 'Sistema',
+          date: new Date(p.fechaCancelacion),
+          status: 'cancelado',
+        })
+      }
+      return eventos
+    })
+    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .slice(0, 50)
+    .map((e) => ({ ...e, time: tiempoRelativo(e.date) }))
 
   const getWelcomeMessage = () => {
     if (!user) return 'Bienvenido'
@@ -267,6 +274,11 @@ export default function InicioPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4 max-h-96 overflow-y-auto">
+            {actividadCompleta.length === 0 && (
+              <p className="text-sm text-secondary-500 text-center py-4">
+                Sin actividad registrada aún
+              </p>
+            )}
             {actividadCompleta.slice(0, actividadVisible).map((activity, index) => (
               <div
                 key={index}
@@ -291,7 +303,13 @@ export default function InicioPage() {
                       : 'info'
                   }
                 >
-                  {activity.status}
+                  {activity.status === 'pendiente'
+                    ? 'nuevo'
+                    : activity.status === 'info'
+                    ? 'en prep.'
+                    : activity.status === 'success'
+                    ? 'ok'
+                    : activity.status}
                 </Badge>
               </div>
             ))}

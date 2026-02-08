@@ -103,7 +103,7 @@ function PedidosContent() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-secondary-900">Pedidos</h1>
           <p className="text-secondary-600 mt-1">
@@ -154,10 +154,10 @@ function PedidosContent() {
         {puedeCrearPedidos && (
           <Button
             onClick={() => router.push('/pedidos/nuevo')}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 w-full sm:w-auto justify-center"
           >
             <Plus className="h-5 w-5" />
-            <span className="hidden sm:inline">Nuevo Pedido</span>
+            Nuevo Pedido
           </Button>
         )}
       </div>
@@ -185,19 +185,19 @@ function PedidosContent() {
       </div>
 
       {/* Filtro de fecha y ordenamiento */}
-      <div className="mb-4 flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-secondary-600" />
+      <div className="mb-4 flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-3">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Calendar className="h-5 w-5 text-secondary-600 shrink-0" />
           <input
             type="date"
             value={fechaFiltro}
             onChange={(e) => setFechaFiltro(e.target.value)}
-            className="px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+            className="flex-1 sm:flex-none px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
           />
           {fechaFiltro && (
             <button
               onClick={() => setFechaFiltro('')}
-              className="text-sm text-secondary-600 hover:text-secondary-900"
+              className="text-sm text-secondary-600 hover:text-secondary-900 shrink-0"
             >
               Limpiar
             </button>
@@ -205,38 +205,21 @@ function PedidosContent() {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-sm text-secondary-600">Ordenar:</span>
+          <span className="text-sm text-secondary-600 shrink-0">Ordenar:</span>
           <div className="flex gap-1">
-            <button
-              onClick={() => setOrdenamiento('reciente')}
-              className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
-                ordenamiento === 'reciente'
-                  ? 'bg-primary-100 text-primary-700 font-medium'
-                  : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
-              }`}
-            >
-              Recientes
-            </button>
-            <button
-              onClick={() => setOrdenamiento('antiguo')}
-              className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
-                ordenamiento === 'antiguo'
-                  ? 'bg-primary-100 text-primary-700 font-medium'
-                  : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
-              }`}
-            >
-              Antiguos
-            </button>
-            <button
-              onClick={() => setOrdenamiento('cliente')}
-              className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
-                ordenamiento === 'cliente'
-                  ? 'bg-primary-100 text-primary-700 font-medium'
-                  : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
-              }`}
-            >
-              Cliente A-Z
-            </button>
+            {(['reciente', 'antiguo', 'cliente'] as const).map((op) => (
+              <button
+                key={op}
+                onClick={() => setOrdenamiento(op)}
+                className={`px-2.5 py-1.5 text-xs rounded-lg transition-colors ${
+                  ordenamiento === op
+                    ? 'bg-primary-100 text-primary-700 font-medium'
+                    : 'bg-secondary-100 text-secondary-700 hover:bg-secondary-200'
+                }`}
+              >
+                {op === 'reciente' ? 'Recientes' : op === 'antiguo' ? 'Antiguos' : 'A-Z'}
+              </button>
+            ))}
           </div>
         </div>
       </div>

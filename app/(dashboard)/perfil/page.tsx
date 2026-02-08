@@ -143,7 +143,7 @@ export default function PerfilPage() {
       {/* Avatar y rol */}
       <Card className="mb-6">
         <CardContent className="pt-6">
-          <div className="flex items-center gap-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
             {/* Avatar */}
             <div className="relative">
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white text-4xl font-bold shadow-lg">
@@ -174,12 +174,12 @@ export default function PerfilPage() {
             </div>
 
             {/* Info */}
-            <div className="flex-1">
+            <div className="flex-1 text-center sm:text-left">
               <h2 className="text-2xl font-bold text-secondary-900">
                 {user?.name}
               </h2>
               <p className="text-secondary-600 mt-1">{user?.email}</p>
-              <div className="flex gap-2 mt-3">
+              <div className="flex gap-2 mt-3 justify-center sm:justify-start">
                 <Badge variant="default">
                   {getRolLabel(user?.role || 'vendedor')}
                 </Badge>

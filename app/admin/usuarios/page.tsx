@@ -91,7 +91,7 @@ export default function UsuariosPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-secondary-900">Usuarios</h1>
           <p className="text-secondary-600 mt-1">
@@ -100,7 +100,7 @@ export default function UsuariosPage() {
         </div>
         <Button
           onClick={() => router.push('/admin/usuarios/nuevo')}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 w-full sm:w-auto justify-center"
         >
           <Plus className="h-5 w-5" />
           Nuevo Usuario
