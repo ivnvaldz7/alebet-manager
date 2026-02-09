@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { Bell, Package, AlertTriangle, CheckCircle, Clock, X } from 'lucide-react'
+import { Bell, Package, AlertTriangle, CheckCircle, Clock, X, Check } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import toast from 'react-hot-toast'
@@ -85,37 +85,53 @@ export function NotificacionesPanel({
         ) : (
           <div>
             {notificaciones.map((notif) => (
-              <button
+              <div
                 key={notif.id}
-                className={`w-full text-left p-4 border-b border-secondary-100 last:border-0 hover:bg-secondary-50 active:bg-secondary-100 transition-colors ${
+                className={`relative border-b border-secondary-100 last:border-0 ${
                   !notif.leida ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
                 }`}
-                onClick={() => handleClick(notif)}
               >
-                <div className="flex items-start gap-3">
-                  <div className="mt-1 flex-shrink-0">{getIcon(notif.tipo)}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <p
-                        className={`text-sm font-medium ${
-                          !notif.leida ? 'text-secondary-900' : 'text-secondary-700'
-                        }`}
-                      >
-                        {notif.titulo}
+                <button
+                  className="w-full text-left p-4 pr-14 hover:bg-secondary-50 active:bg-secondary-100 transition-colors"
+                  onClick={() => handleClick(notif)}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1 flex-shrink-0">{getIcon(notif.tipo)}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p
+                          className={`text-sm font-medium ${
+                            !notif.leida ? 'text-secondary-900' : 'text-secondary-700'
+                          }`}
+                        >
+                          {notif.titulo}
+                        </p>
+                      </div>
+                      <p className="text-sm text-secondary-600 mt-1 truncate">
+                        {notif.mensaje}
                       </p>
-                      {!notif.leida && (
-                        <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0 mt-1" />
-                      )}
+                      <p className="text-xs text-secondary-500 mt-2">
+                        {timeAgo(notif.fecha)}
+                      </p>
                     </div>
-                    <p className="text-sm text-secondary-600 mt-1 truncate">
-                      {notif.mensaje}
-                    </p>
-                    <p className="text-xs text-secondary-500 mt-2">
-                      {timeAgo(notif.fecha)}
-                    </p>
                   </div>
-                </div>
-              </button>
+                </button>
+
+                {/* Botón marcar como leída - visible en todas las pantallas */}
+                {!notif.leida && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      markAsRead(notif.id)
+                      toast.success('Marcada como leída')
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-primary-100 text-primary-700 hover:bg-primary-200 active:bg-primary-300 transition-colors"
+                    title="Marcar como leída"
+                  >
+                    <Check className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         )}

@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input'
 import { Building2, Bell, Database, Save, Download } from 'lucide-react'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function ConfiguracionPage() {
+  const { user } = useAuth()
   const [isSaving, setIsSaving] = useState(false)
 
   const handleSave = async () => {
@@ -95,7 +97,7 @@ export default function ConfiguracionPage() {
         await fetch('/api/notificaciones/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: 'current-user' }),
+          body: JSON.stringify({ userId: user?.id }),
         })
 
         toast.success('Notificaciones activadas correctamente!')

@@ -28,9 +28,12 @@ export async function GET(request: NextRequest) {
     // Construir filtro
     const filter: any = {}
 
-    // Si es vendedor, solo ve sus pedidos
+    // Si es vendedor, ve pedidos donde es creador O armador
     if (session.user.role === 'vendedor') {
-      filter['creadoPor._id'] = session.user.id
+      filter.$or = [
+        { 'creadoPor._id': session.user.id },
+        { 'armadoPor._id': session.user.id },
+      ]
     }
 
     // Filtro por estado

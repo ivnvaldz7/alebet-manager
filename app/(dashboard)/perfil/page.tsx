@@ -6,14 +6,16 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { User, Mail, Briefcase, Camera } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { signOut } from 'next-auth/react'
+import { APP_VERSION } from '@/lib/constants/version'
 
 export default function PerfilPage() {
   const { user } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [ultimoAcceso, setUltimoAcceso] = useState<string>('')
 
   const [formData, setFormData] = useState({
     nombre: user?.name || '',
@@ -28,6 +30,29 @@ export default function PerfilPage() {
     passwordConfirmar: '',
   })
   const [isChangingPassword, setIsChangingPassword] = useState(false)
+
+  // Guardar último acceso en localStorage
+  useEffect(() => {
+    const ahora = new Date()
+    const fechaFormateada = ahora.toLocaleString('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+
+    // Recuperar último acceso anterior
+    const ultimoAccesoAnterior = localStorage.getItem('ultimoAcceso')
+    if (ultimoAccesoAnterior) {
+      setUltimoAcceso(ultimoAccesoAnterior)
+    } else {
+      setUltimoAcceso(fechaFormateada)
+    }
+
+    // Guardar el acceso actual para la próxima vez
+    localStorage.setItem('ultimoAcceso', fechaFormateada)
+  }, [])
 
   const getRolLabel = (rol: string) => {
     const labels: Record<string, string> = {
@@ -425,11 +450,13 @@ export default function PerfilPage() {
         <CardContent className="space-y-3 text-sm">
           <div className="flex justify-between">
             <span className="text-secondary-600">Versión:</span>
-            <span className="font-medium text-secondary-900">1.0.0</span>
+            <span className="font-medium text-secondary-900">{APP_VERSION}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-secondary-600">Último acceso:</span>
-            <span className="font-medium text-secondary-900">Hoy a las 14:30</span>
+            <span className="font-medium text-secondary-900">
+              {ultimoAcceso || 'Cargando...'}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-secondary-600">ID de usuario:</span>

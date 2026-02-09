@@ -12,7 +12,11 @@
       "Bash(head:*)",
       "Bash(openssl rand:*)",
       "Bash(node -e:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm install:*)",
+      "Bash(git reset:*)",
+      "Bash(git push:*)"
     ]
   }
 }
