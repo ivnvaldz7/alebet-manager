@@ -88,39 +88,43 @@ const withPWA = withPWAInit({
           },
         },
       },
+      // Solo cachear assets hasheados de Next.js (immutables por nombre)
       {
-        urlPattern: /\.(?:js)$/i,
-        handler: 'StaleWhileRevalidate',
+        urlPattern: /\/_next\/static\/.+\.(?:js)$/i,
+        handler: 'CacheFirst',
         options: {
-          cacheName: 'static-js-assets',
+          cacheName: 'next-static-js',
           expiration: {
-            maxEntries: 32,
-            maxAgeSeconds: 24 * 60 * 60, // 24 horas
+            maxEntries: 64,
+            maxAgeSeconds: 7 * 24 * 60 * 60, // 1 semana
           },
         },
       },
       {
-        urlPattern: /\.(?:css|less)$/i,
-        handler: 'StaleWhileRevalidate',
+        urlPattern: /\/_next\/static\/.+\.(?:css)$/i,
+        handler: 'CacheFirst',
         options: {
-          cacheName: 'static-style-assets',
+          cacheName: 'next-static-css',
           expiration: {
             maxEntries: 32,
-            maxAgeSeconds: 24 * 60 * 60, // 24 horas
+            maxAgeSeconds: 7 * 24 * 60 * 60, // 1 semana
           },
         },
       },
+      // Data prefetching de Next.js - NetworkFirst para sincronizar con código
       {
         urlPattern: /\/_next\/data\/.+\/.+\.json$/i,
-        handler: 'StaleWhileRevalidate',
+        handler: 'NetworkFirst',
         options: {
           cacheName: 'next-data',
+          networkTimeoutSeconds: 3,
           expiration: {
             maxEntries: 32,
-            maxAgeSeconds: 24 * 60 * 60, // 24 horas
+            maxAgeSeconds: 60 * 60, // 1 hora
           },
         },
       },
+      // APIs - NetworkFirst para datos frescos
       {
         urlPattern: /\/api\/.*$/i,
         handler: 'NetworkFirst',
@@ -134,17 +138,11 @@ const withPWA = withPWAInit({
           networkTimeoutSeconds: 10, // fallback a cache si no responde en 10s
         },
       },
+      // Páginas HTML - NetworkOnly para evitar stale content
+      // (no cacheamos HTML para evitar mezclar versiones post-deploy)
       {
-        urlPattern: /.*/i,
-        handler: 'NetworkFirst',
-        options: {
-          cacheName: 'others',
-          expiration: {
-            maxEntries: 32,
-            maxAgeSeconds: 24 * 60 * 60, // 24 horas
-          },
-          networkTimeoutSeconds: 10,
-        },
+        urlPattern: ({request}) => request.mode === 'navigate',
+        handler: 'NetworkOnly',
       },
     ],
   },
