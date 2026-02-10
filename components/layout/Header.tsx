@@ -124,7 +124,7 @@ export function Header() {
                       onClick={() => setShowContextMenu(false)}
                     />
                     {/* Mobile: bottom sheet */}
-                    <div className="md:hidden fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-2xl border-t border-secondary-200 pb-6">
+                    <div className="md:hidden fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-2xl border-t border-secondary-200 pb-24">
                       <div className="w-8 h-1 bg-secondary-300 rounded-full mx-auto mt-3 mb-4" />
                       <p className="px-5 pb-2 text-xs font-semibold text-secondary-500 uppercase tracking-wider">
                         Modo de vista
@@ -201,7 +201,7 @@ export function Header() {
                     onClick={() => setShowUserMenu(false)}
                   />
                   {/* Mobile: bottom sheet */}
-                  <div className="md:hidden fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-2xl border-t border-secondary-200 pb-6">
+                  <div className="md:hidden fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-2xl border-t border-secondary-200 pb-24">
                     <div className="w-8 h-1 bg-secondary-300 rounded-full mx-auto mt-3 mb-2" />
                     <div className="px-5 py-3 border-b border-secondary-100">
                       <p className="text-base font-semibold text-secondary-900">
