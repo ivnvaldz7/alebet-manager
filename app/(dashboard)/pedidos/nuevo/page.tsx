@@ -223,7 +223,7 @@ export default function NuevoPedidoPage() {
                 onChange={(e) =>
                   setCliente({ ...cliente, nombre: e.target.value })
                 }
-                placeholder="Veterinaria del Sol"
+                placeholder="Ej: Clínica Veterinaria"
               />
 
               <div className="grid grid-cols-2 gap-4 mt-4">
@@ -234,7 +234,7 @@ export default function NuevoPedidoPage() {
                   onChange={(e) =>
                     setCliente({ ...cliente, calle: e.target.value })
                   }
-                  placeholder="San Martín"
+                  placeholder="Nombre de calle"
                 />
                 <Input
                   label="Número"
@@ -243,7 +243,7 @@ export default function NuevoPedidoPage() {
                   onChange={(e) =>
                     setCliente({ ...cliente, numero: e.target.value })
                   }
-                  placeholder="1234"
+                  placeholder="Nro"
                 />
               </div>
 
@@ -254,7 +254,7 @@ export default function NuevoPedidoPage() {
                 onChange={(e) =>
                   setCliente({ ...cliente, localidad: e.target.value })
                 }
-                placeholder="Buenos Aires"
+                placeholder="Ciudad / Partido"
                 className="mt-4"
               />
 
@@ -265,7 +265,7 @@ export default function NuevoPedidoPage() {
                 onChange={(e) =>
                   setCliente({ ...cliente, telefono: e.target.value })
                 }
-                placeholder="+54 11 1234-5678"
+                placeholder="Teléfono de contacto"
                 className="mt-4"
               />
 
@@ -278,7 +278,7 @@ export default function NuevoPedidoPage() {
                   onChange={(e) =>
                     setCliente({ ...cliente, observaciones: e.target.value })
                   }
-                  placeholder="Entregar por la mañana"
+                  placeholder="Horarios de entrega, indicaciones especiales, etc."
                   rows={2}
                   className="w-full px-4 py-3 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />

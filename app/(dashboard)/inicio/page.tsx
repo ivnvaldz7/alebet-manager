@@ -42,12 +42,19 @@ export default function InicioPage() {
 
   const stats = [
     {
+      title: 'Stock Crítico',
+      value: stockCritico.toString(),
+      subtitle: stockCritico > 0 ? `${stockCritico} producto${stockCritico !== 1 ? 's' : ''}` : null,
+      icon: AlertTriangle,
+      variant: stockCritico > 0 ? 'alert' : 'neutral',
+      onClick: () => router.push('/stock?critico=true'),
+    },
+    {
       title: 'Pedidos Hoy',
       value: pedidosHoy.toString(),
-      change: pedidosHoy > 0 ? `+${pedidosHoy}` : '0',
+      subtitle: pedidosHoy > 0 ? `Últimos ${pedidosHoy}` : null,
       icon: Package,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
+      variant: 'neutral',
       onClick: () => {
         const hoy = new Date().toISOString().split('T')[0]
         router.push(`/pedidos?fecha=${hoy}`)
@@ -56,28 +63,17 @@ export default function InicioPage() {
     {
       title: 'En Armado',
       value: enArmado.toString(),
-      change: enArmado > 0 ? `${enArmado} pendientes` : 'Todo al día',
+      subtitle: enArmado > 0 ? `En preparación` : null,
       icon: TrendingUp,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
+      variant: 'neutral',
       onClick: () => router.push('/pedidos?estado=en_preparacion'),
-    },
-    {
-      title: 'Stock Crítico',
-      value: stockCritico.toString(),
-      change: stockCritico > 0 ? 'Revisar' : 'OK',
-      icon: AlertTriangle,
-      color: 'text-red-600',
-      bgColor: 'bg-red-50',
-      onClick: () => router.push('/stock?critico=true'),
     },
     {
       title: 'Productos',
       value: productos.length.toString(),
-      change: 'Total activos',
+      subtitle: 'Inventario',
       icon: Archive,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
+      variant: 'neutral',
       onClick: () => router.push('/stock'),
     },
   ]
@@ -224,36 +220,62 @@ export default function InicioPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8">
         {stats.map((stat) => {
           const Icon = stat.icon
+          const isAlert = stat.variant === 'alert'
+
           return (
-            <Card
+            <button
               key={stat.title}
               onClick={stat.onClick}
-              className="hover:shadow-md transition-shadow cursor-pointer hover:scale-105"
+              className={`
+                group relative overflow-hidden
+                bg-white rounded-lg
+                border transition-all duration-200
+                ${isAlert
+                  ? 'border-orange-200 hover:border-orange-300 hover:shadow-sm'
+                  : 'border-secondary-200/50 hover:border-secondary-300 hover:shadow-sm'
+                }
+                p-4 sm:p-5
+                text-left
+                focus:outline-none focus:ring-2 focus:ring-primary-500/20
+              `}
             >
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-secondary-600 mb-1">
-                      {stat.title}
-                    </p>
-                    <p className="text-3xl font-bold text-secondary-900">
-                      {stat.value}
-                    </p>
-                    {stat.change && (
-                      <p className="text-xs text-secondary-500 mt-2">
-                        {stat.change}
-                      </p>
-                    )}
-                  </div>
-                  <div className={`p-3 rounded-lg ${stat.bgColor}`}>
-                    <Icon className={`h-6 w-6 ${stat.color}`} />
-                  </div>
+              {/* Header con icono pequeño */}
+              <div className="flex items-start justify-between mb-3">
+                <span className="text-xs font-medium text-secondary-600 uppercase tracking-wide">
+                  {stat.title}
+                </span>
+                <Icon className={`
+                  h-4 w-4 flex-shrink-0 transition-transform duration-200
+                  ${isAlert ? 'text-orange-500 group-hover:scale-110' : 'text-secondary-400'}
+                `} />
+              </div>
+
+              {/* Número hero */}
+              <div className="mb-2">
+                <span className={`
+                  text-4xl sm:text-5xl font-bold tabular-nums
+                  transition-all duration-200
+                  ${isAlert ? 'text-orange-600' : 'text-secondary-900 group-hover:text-primary-700'}
+                `}>
+                  {stat.value}
+                </span>
+              </div>
+
+              {/* Subtitle funcional (solo cuando hay info útil) */}
+              {stat.subtitle && (
+                <div className="text-sm font-medium text-secondary-500">
+                  {stat.subtitle}
                 </div>
-              </CardContent>
-            </Card>
+              )}
+
+              {/* Indicador de alerta (barra sutil) */}
+              {isAlert && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-400 to-orange-500" />
+              )}
+            </button>
           )
         })}
       </div>
