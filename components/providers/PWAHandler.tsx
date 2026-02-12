@@ -3,6 +3,6 @@
 import { useServiceWorkerUpdate } from '@/hooks/useServiceWorkerUpdate'
 
 export function PWAHandler() {
-  useServiceWorkerUpdate()
+  //useServiceWorkerUpdate()
   return null
 }
