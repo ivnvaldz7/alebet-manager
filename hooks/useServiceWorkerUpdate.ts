@@ -1,32 +1,67 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
+
+const SW_UPDATED_KEY = 'sw_updated'
 
 export function useServiceWorkerUpdate() {
+  const [updateAvailable, setUpdateAvailable] = useState(false)
+  const registeredRef = useRef(false)
+  const wbRef = useRef<Workbox | null>(null)
+
   useEffect(() => {
     if (
-      typeof window !== 'undefined' &&
-      'serviceWorker' in navigator &&
-      window.workbox !== undefined
+      typeof window === 'undefined' ||
+      !('serviceWorker' in navigator) ||
+      window.workbox === undefined
     ) {
-      const wb = window.workbox
-
-      // Cuando hay un SW esperando, activarlo inmediatamente
-      const promptNewVersionAvailable = () => {
-        // skipWaiting ya está habilitado en next.config.ts
-        // pero enviamos el mensaje por si acaso
-        wb.messageSkipWaiting()
-      }
-
-      wb.addEventListener('waiting', promptNewVersionAvailable)
-
-      // Cuando el SW se activa, recargar para usar la nueva versión
-      wb.addEventListener('controlling', () => {
-        window.location.reload()
-      })
-
-      // Registrar el SW
-      wb.register()
+      return
     }
+
+    // Only register once (StrictMode guard)
+    if (registeredRef.current) return
+    registeredRef.current = true
+
+    const wb = window.workbox
+    wbRef.current = wb
+
+    // Clear the reload guard if there's no SW waiting
+    // (allows future updates to trigger reload)
+    if (!navigator.serviceWorker.controller) {
+      sessionStorage.removeItem(SW_UPDATED_KEY)
+    }
+
+    // When a new SW is installed and waiting, show the update banner
+    wb.addEventListener('waiting', () => {
+      setUpdateAvailable(true)
+    })
+
+    // Also check if there's already a SW waiting (e.g. page was refreshed
+    // while a SW was already in waiting state)
+    wb.addEventListener('controlling', () => {
+      // Only reload if we initiated the update (flag is set by applyUpdate)
+      if (sessionStorage.getItem(SW_UPDATED_KEY) === '1') {
+        sessionStorage.removeItem(SW_UPDATED_KEY)
+        window.location.reload()
+      }
+    })
+
+    wb.register()
   }, [])
+
+  const applyUpdate = useCallback(() => {
+    const wb = wbRef.current
+    if (!wb) return
+
+    // Guard against reload loops
+    if (sessionStorage.getItem(SW_UPDATED_KEY) === '1') return
+
+    // Set flag BEFORE triggering skip waiting
+    sessionStorage.setItem(SW_UPDATED_KEY, '1')
+
+    // Tell the waiting SW to activate
+    wb.messageSkipWaiting()
+  }, [])
+
+  return { updateAvailable, applyUpdate }
 }
