@@ -17,6 +17,7 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -125,11 +126,58 @@ function LoginForm() {
               type="submit"
               className="w-full"
               isLoading={isLoading}
-              disabled={isLoading}
+              disabled={isLoading || isDemoLoading}
             >
               Ingresar
             </Button>
           </form>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-secondary-200" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-white px-2 text-secondary-400">o</span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full"
+            isLoading={isDemoLoading}
+            disabled={isLoading || isDemoLoading}
+            onClick={async () => {
+              setIsDemoLoading(true);
+              try {
+                // Asegurar que el usuario demo exista
+                await fetch("/api/seed", { method: "POST" });
+
+                const result = await signIn("credentials", {
+                  email: "demo@alebet.com",
+                  password: "demo1234",
+                  redirect: false,
+                });
+
+                if (result?.error) {
+                  toast.error("Error al acceder como demo");
+                } else {
+                  toast.success("Bienvenido al modo demo");
+                  router.push(callbackUrl);
+                  router.refresh();
+                }
+              } catch {
+                toast.error("Error al acceder como demo");
+              } finally {
+                setIsDemoLoading(false);
+              }
+            }}
+          >
+            Acceder como Demo
+          </Button>
+          <p className="text-xs text-secondary-400 text-center mt-2">
+            Acceso completo con datos de ejemplo precargados
+          </p>
 
         </CardContent>
       </Card>

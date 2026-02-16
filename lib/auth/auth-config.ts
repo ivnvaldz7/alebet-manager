@@ -3,6 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import connectDB from '@/lib/db/mongoose'
 import UserModel from '@/lib/models/User'
+import { seedDemoDataIfEmpty } from '@/lib/utils/seed-demo'
 import type { User, UserWithoutPassword, UserRole, AdminContext } from '@/types'
 
 export const authOptions: NextAuthOptions = {
@@ -41,6 +42,9 @@ export const authOptions: NextAuthOptions = {
           if (!isPasswordValid) {
             throw new Error('Contraseña incorrecta')
           }
+
+          // Seed datos demo si la DB está vacía (no-op si ya hay datos)
+          seedDemoDataIfEmpty().catch(() => {})
 
           // No devolver password en sesión
           const { password, ...userWithoutPassword } = user

@@ -52,6 +52,25 @@ Password: admin123
 
 > Cambiar en produccion.
 
+## Demo en vivo
+
+La app incluye un **modo demo** que permite probar todas las funcionalidades sin configuracion previa.
+
+### Como funciona
+
+1. Al abrir la app, la pantalla de login muestra un boton **"Acceder como Demo"**
+2. Al hacer clic, se crea automaticamente:
+   - Un usuario admin demo (`demo@alebet.com` / `demo1234`)
+   - 5 productos de ejemplo con stock y lotes
+   - 6 clientes de ejemplo
+3. El usuario ingresa directamente con permisos de administrador
+
+### Por que se permite acceso sin registro
+
+Este modo existe para que cualquier persona pueda **evaluar el sistema** sin necesidad de crear una cuenta ni configurar una base de datos manualmente. Los datos demo se insertan solo si la base de datos esta vacia, por lo que no afecta entornos con datos reales.
+
+> En un entorno de produccion real, se recomienda desactivar el endpoint `/api/seed` o protegerlo con una variable de entorno.
+
 ## Roles
 
 | Rol | Permisos |
@@ -155,7 +174,17 @@ scripts/                   # Seeds de base de datos
 
 ## Deploy
 
-### Vercel (recomendado)
+### Netlify
+
+1. Conectar repositorio en [netlify.com](https://app.netlify.com)
+2. Configurar variables de entorno en **Site settings > Environment variables**:
+   - `MONGODB_URI` — Connection string de MongoDB Atlas
+   - `NEXTAUTH_SECRET` — Secret aleatorio (`openssl rand -base64 32`)
+   - `NEXTAUTH_URL` — URL del sitio (ej: `https://alebet.netlify.app`)
+3. Deploy automatico con cada push a `main`
+4. No se requiere seed manual: al hacer clic en "Acceder como Demo" se crean los datos automaticamente
+
+### Vercel
 
 1. Conectar repositorio en [vercel.com](https://vercel.com)
 2. Configurar variables de entorno:
